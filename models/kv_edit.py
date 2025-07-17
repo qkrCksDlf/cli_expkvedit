@@ -141,7 +141,7 @@ class Flux_kv_edit(only_Flux):
             bool_mask = (mask.sum(dim=2) > 0.5)
             mask_indices = torch.nonzero(bool_mask)[:,1] 
             
-            #单独分离inversion
+            
             assert not (~bool_mask).all(), "mask is all false"
             assert not (bool_mask).all(), "mask is all true"
             attention_mask = self.create_attention_mask(L+512, mask_indices, device=mask.device)
@@ -155,7 +155,7 @@ class Flux_kv_edit(only_Flux):
         #tx = 0.6
         #denoise_timesteps = torch.linspace(tx, 0.0, 24 + 1).tolist() #skip_step 포함한 것.
         
-        # 加噪过程
+        # 노이즈 추가 과정
         z0 = inp["img"].clone()        
         info['inverse'] = True
         zt, info = denoise_kv(self.model, **inp, timesteps=denoise_timesteps, guidance=opts.inversion_guidance, inverse=True, info=info)
