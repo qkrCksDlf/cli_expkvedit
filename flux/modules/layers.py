@@ -288,11 +288,11 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
         txt_q, txt_k, txt_v = rearrange(txt_qkv, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
         txt_q, txt_k = self.txt_attn.norm(txt_q, txt_k, txt_v)   
 
-        feature_q_name = str(info['t']) + '_' + str(info['id']) + '_' + 'MB' + '_' + 'Q' #이 부분 추가
+        #feature_q_name = str(info['t']) + '_' + str(info['id']) + '_' + 'MB' + '_' + 'Q' #이 부분 추가
         feature_k_name = str(info['t']) + '_' + str(info['id']) + '_' + 'MB' + '_' + 'K'
         feature_v_name = str(info['t']) + '_' + str(info['id']) + '_' + 'MB' + '_' + 'V'
         if info['inverse']:
-            info['feature'][feature_q_name] = img_q.cpu() #이 부분 추가
+            #info['feature'][feature_q_name] = img_q.cpu() #이 부분 추가
             info['feature'][feature_k_name] = img_k.cpu()
             info['feature'][feature_v_name] = img_v.cpu()
             
