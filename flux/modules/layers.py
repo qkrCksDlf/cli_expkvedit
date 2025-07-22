@@ -306,12 +306,12 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             source_img_v = info['feature'][feature_v_name].to(img.device)
     
             mask_indices = info['mask_indices'] 
-            img_k[:, :, mask_indices, ...] = source_img_k #이부분 수정됨.
-            img_v[:, :, mask_indices, ...] = source_img_v #이부분 수정됨.
+            source_img_k[:, :, mask_indices, ...] = img_k
+            source_img_v[:, :, mask_indices, ...] = img_v
             
             q = torch.cat((txt_q, img_q), dim=2)
-            k = torch.cat((txt_k, img_k), dim=2)
-            v = torch.cat((txt_v, img_v), dim=2)
+            k = torch.cat((txt_k, source_img_k), dim=2)
+            v = torch.cat((txt_v, source_img_v), dim=2)
             attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
 
         
@@ -370,11 +370,11 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             source_img_v = info['feature'][feature_v_name].to(x.device)
         
             mask_indices = info['mask_indices']
-            img_k[:, :, mask_indices, ...] = source_img_k
-            img_v[:, :, mask_indices, ...] = source_img_v
+            source_img_k[:, :, mask_indices, ...] = img_k
+            source_img_v[:, :, mask_indices, ...] = img_v
             
-            k = torch.cat((txt_k, img_k), dim=2)
-            v = torch.cat((txt_v, img_v), dim=2)
+            k = torch.cat((txt_k, source_img_k), dim=2)
+            v = torch.cat((txt_v, source_img_v), dim=2)
             attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
 
         # compute activation in mlp stream, cat again and run second linear layer
