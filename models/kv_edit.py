@@ -158,7 +158,7 @@ class Flux_kv_edit(only_Flux):
         # 加噪过程
         z0 = inp["img"].clone()        
         info['inverse'] = True
-        zt, info = denoise_kv(self.model, **inp, timesteps=denoise_timesteps, guidance=opts.inversion_guidance, inverse=True, info=info)
+        zt, info = denoise_kv(self.model, **inp, timesteps=denoise_timesteps, guidance=opts.inversion_guidance, inverse=True, info=info, info_s=info_s)
         return z0,zt,info
     
     @torch.inference_mode()
@@ -207,7 +207,7 @@ class Flux_kv_edit(only_Flux):
         info['attention_scale'] = attention_scale
 
         info['inverse'] = False
-        x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info, info_s=info_s)
+        x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info_r, info_s=info)
        
         z0[:, mask_indices,...] = z0[:, mask_indices,...] * (1 - info['mask'][:, mask_indices,...]) + x * info['mask'][:, mask_indices,...]
         
