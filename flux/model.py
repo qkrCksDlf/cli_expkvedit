@@ -130,6 +130,7 @@ class Flux_kv(Flux):
         y: Tensor, 
         guidance: Tensor | None = None, 
         info: dict = {},
+        info_s: dict = {}
     ) -> Tensor:
         if img.ndim != 3 or txt.ndim != 3:
             raise ValueError("Input img and txt tensors must have 3 dimensions.")
