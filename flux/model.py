@@ -138,6 +138,8 @@ class Flux_kv(Flux):
 
         # running on sequences img
         img = self.img_in(img)
+        
+      
         vec = self.time_in(timestep_embedding(timesteps, 256)) 
         if self.params.guidance_embed:
             if guidance is None:
@@ -149,6 +151,7 @@ class Flux_kv(Flux):
         ids = torch.cat((txt_ids, img_ids), dim=1) 
         pe = self.pe_embedder(ids) 
         if not info['inverse']:
+            zt_r = self.img_in(zt_r) #c추가
             mask_indices = info['mask_indices'] 
             info['pe_mask'] = torch.cat((pe[:, :, :512, ...],pe[:, :, mask_indices+512, ...]),dim=2)
 
