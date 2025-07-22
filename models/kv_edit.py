@@ -191,14 +191,14 @@ class Flux_kv_edit(only_Flux):
        
         mask_indices = info['mask_indices']
         if opts.re_init:
-            noise = torch.randn_like(zt_r)
+            noise = torch.randn_like(zt)
             t  = denoise_timesteps[0]
-            zt_noise = z0_r*(1 - t) + noise * t
+            zt_noise = z0*(1 - t) + noise * t
             inp_target["img"] = zt_noise[:, mask_indices,...] #원상복구
             
         else:
             img_name = str(info['t']) + '_' + 'img'
-            zt = info['feature'][img_name].to(zt_r.device)
+            zt = info['feature'][img_name].to(zt.device)
             inp_target["img"] = zt[:, mask_indices,...] #원상복구
             
         if opts.attn_scale != 0 and (~bool_mask).any():
