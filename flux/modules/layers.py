@@ -270,7 +270,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
     def __init__(self, hidden_size: int, num_heads: int, mlp_ratio: float, qkv_bias: bool = False):
         super().__init__(hidden_size, num_heads, mlp_ratio, qkv_bias)
 
-    def forward(self, img: Tensor, txt: Tensor, vec: Tensor, pe: Tensor, info, info_s) -> tuple[Tensor, Tensor]:
+    def forward(self, img: Tensor, txt: Tensor, vec: Tensor, pe: Tensor, info, info_s, zt_r) -> tuple[Tensor, Tensor]:
         img_mod1, img_mod2 = self.img_mod(vec)
         txt_mod1, txt_mod2 = self.txt_mod(vec)
 
@@ -341,7 +341,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
     ):
         super().__init__(hidden_size, num_heads, mlp_ratio, qk_scale)
 
-    def forward(self,x: Tensor, vec: Tensor, pe: Tensor, info, info_s) -> Tensor:
+    def forward(self,x: Tensor, vec: Tensor, pe: Tensor, info, info_s, zt_r) -> Tensor:
         mod, _ = self.modulation(vec)
         x_mod = (1 + mod.scale) * self.pre_norm(x) + mod.shift
         qkv, mlp = torch.split(self.linear1(x_mod), [3 * self.hidden_size, self.mlp_hidden_dim], dim=-1)
