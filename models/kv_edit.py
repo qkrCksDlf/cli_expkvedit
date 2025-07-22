@@ -132,6 +132,7 @@ class Flux_kv_edit(only_Flux):
         bs, L, d = inp["img"].shape
         h = opts.height // 8
         w = opts.width // 8
+        zt_r = inp["img"] #dummy
         
 
         if opts.attn_mask:
@@ -160,7 +161,7 @@ class Flux_kv_edit(only_Flux):
         # 加噪过程
         z0 = inp["img"].clone()        
         info['inverse'] = True
-        zt, info = denoise_kv(self.model, **inp, timesteps=denoise_timesteps, guidance=opts.inversion_guidance, inverse=True, info=info, info_s=info2,zt_r=0)
+        zt, info = denoise_kv(self.model, **inp, timesteps=denoise_timesteps, guidance=opts.inversion_guidance, inverse=True, info=info, info_s=info2,zt_r=zt_r)
         return z0,zt,info
     
     @torch.inference_mode()
