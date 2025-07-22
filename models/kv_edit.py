@@ -163,7 +163,8 @@ class Flux_kv_edit(only_Flux):
     
     @torch.inference_mode()
     
-    def denoise(self, z0, z0_r, zt_r, inp_target, mask:Tensor, opts, info): #모두 레퍼런스로 넣어줌. info는 소스, z0도 소스. 
+    def denoise(self, z0, z0_r, zt, inp_target, mask:Tensor, opts, info): #모두 레퍼런스로 넣어줌. info는 소스, z0도 소스. 
+        # qkv 실험 : info -> 레퍼런스 
         '''
         target 객체를 추가하여 편집하기 위해 수정됨.
         '''
@@ -193,12 +194,12 @@ class Flux_kv_edit(only_Flux):
             noise = torch.randn_like(zt_r)
             t  = denoise_timesteps[0]
             zt_noise = z0_r*(1 - t) + noise * t
-            inp_target["img"] = zt_noise[:, mask_indices,...]
+            inp_target["img"] = zt_noise[:, mask_indices,...] #원상복구
             
         else:
             img_name = str(info['t']) + '_' + 'img'
-            zt_r = info['feature'][img_name].to(zt_r.device)
-            inp_target["img"] = zt_r[:, mask_indices,...]
+            zt = info['feature'][img_name].to(zt_r.device)
+            inp_target["img"] = zt[:, mask_indices,...] #원상복구
             
         if opts.attn_scale != 0 and (~bool_mask).any():
             attention_scale = self.create_attention_scale(L+512, mask_indices, device=mask.device,scale = opts.attn_scale)
@@ -207,7 +208,7 @@ class Flux_kv_edit(only_Flux):
         info['attention_scale'] = attention_scale
 
         info['inverse'] = False
-        x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info)
+        x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info) #info는 레퍼런스
        
         z0[:, mask_indices,...] = z0[:, mask_indices,...] * (1 - info['mask'][:, mask_indices,...]) + x * info['mask'][:, mask_indices,...]
         
