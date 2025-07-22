@@ -163,7 +163,7 @@ class Flux_kv_edit(only_Flux):
     
     @torch.inference_mode()
     
-    def denoise(self, z0, z0_r, zt_r, inp_target, mask:Tensor, opts, info): #모두 레퍼런스로 넣어줌. info는 소스, z0도 소스. 
+    def denoise(self, z0, z0_r, zt_r, inp_target, mask:Tensor, opts, info, info_s): #모두 레퍼런스로 넣어줌. info는 소스, z0도 소스. 
         '''
         target 객체를 추가하여 편집하기 위해 수정됨.
         '''
@@ -207,7 +207,7 @@ class Flux_kv_edit(only_Flux):
         info['attention_scale'] = attention_scale
 
         info['inverse'] = False
-        x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info)
+        x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info, info_s=info_s)
        
         z0[:, mask_indices,...] = z0[:, mask_indices,...] * (1 - info['mask'][:, mask_indices,...]) + x * info['mask'][:, mask_indices,...]
         
