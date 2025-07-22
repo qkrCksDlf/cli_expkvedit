@@ -154,14 +154,14 @@ class Flux_kv(Flux):
         cnt = 0
         for block in self.double_blocks:
             info['id'] = cnt
-            img, txt = block(img=img, txt=txt, vec=vec, pe=pe, info=info)
+            img, txt = block(img=img, txt=txt, vec=vec, pe=pe, info=info, info_s=info_s)
             cnt += 1
 
         cnt = 0
         x = torch.cat((txt, img), 1) 
         for block in self.single_blocks:
             info['id'] = cnt
-            x = block(x, vec=vec, pe=pe, info=info)
+            x = block(x, vec=vec, pe=pe, info=info, info_s=info_s)
             cnt += 1
 
         img = x[:, txt.shape[1] :, ...]
