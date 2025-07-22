@@ -177,7 +177,7 @@ def denoise_kv(
             guidance=guidance_vec,
             info=info,
             info_s=info_s,
-            zt_r
+            zt_r=zt_r
         )
         img = img + (t_prev - t_curr) * pred
     return img, info
