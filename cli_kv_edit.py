@@ -306,8 +306,9 @@ class FluxEditor_CLI:
             inp_target = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
             
-            x = self.model.denoise(z0.clone(),z0_r, zt_r, inp_target2, mask, opts, info)
-            # z0->소스, z0_r->레퍼런스, zt_r->레퍼런스, inp_target2->레퍼런스, mask->타겟*, opts, info->소스  
+            x = self.model.denoise(z0.clone(),z0_r, zt, inp_target, mask2, opts, info_r)
+            # 기존 : z0->소스, z0_r->레퍼런스, zt_r->레퍼런스, inp_target2->레퍼런스, mask->타겟*, opts, info->소스  
+            # qkv 실험 : z0->소스, z0_r->레퍼런스, zt->소스-, inp_target->소스-, mask->타겟*, opts, info->레퍼런스-
             
         with torch.autocast(device_type=self.device[1].type, dtype=torch.bfloat16):
             x = self.ae.decode(x.to(self.device[1]))
