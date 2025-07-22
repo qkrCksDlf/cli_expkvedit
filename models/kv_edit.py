@@ -208,7 +208,7 @@ class Flux_kv_edit(only_Flux):
         info['attention_scale'] = attention_scale
 
         info['inverse'] = False
-        x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info_r, info_s=info)
+        x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info, info_s=info)
        
         z0[:, mask_indices,...] = z0[:, mask_indices,...] * (1 - info['mask'][:, mask_indices,...]) + x * info['mask'][:, mask_indices,...]
         
