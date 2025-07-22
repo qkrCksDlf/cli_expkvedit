@@ -287,15 +287,12 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
         txt_qkv = self.txt_attn.qkv(txt_modulated)
         txt_q, txt_k, txt_v = rearrange(txt_qkv, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
         txt_q, txt_k = self.txt_attn.norm(txt_q, txt_k, txt_v)   
-
-        feature_q_name = str(info['t']) + '_' + str(info['id']) + '_' + 'MB' + '_' + 'Q' #이 부분 추가
+        
         feature_k_name = str(info['t']) + '_' + str(info['id']) + '_' + 'MB' + '_' + 'K'
         feature_v_name = str(info['t']) + '_' + str(info['id']) + '_' + 'MB' + '_' + 'V'
         if info['inverse']:
-            info['feature'][feature_q_name] = img_q.cpu() #이 부분 추가
             info['feature'][feature_k_name] = img_k.cpu()
             info['feature'][feature_v_name] = img_v.cpu()
-            
             q = torch.cat((txt_q, img_q), dim=2)
             k = torch.cat((txt_k, img_k), dim=2)
             v = torch.cat((txt_v, img_v), dim=2)
@@ -305,7 +302,6 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 attn = attention(q, k, v, pe=pe)
     
         else:
-            source_img_q = info['feature'][feature_q_name].to(img.device)
             source_img_k = info['feature'][feature_k_name].to(img.device)
             source_img_v = info['feature'][feature_v_name].to(img.device)
     
@@ -313,7 +309,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             source_img_k[:, :, mask_indices, ...] = img_k
             source_img_v[:, :, mask_indices, ...] = img_v
             
-            q = torch.cat((txt_q, source_img_q), dim=2) #기존 : ing_q -> source_img_q
+            q = torch.cat((txt_q, img_q), dim=2)
             k = torch.cat((txt_k, source_img_k), dim=2)
             v = torch.cat((txt_v, source_img_v), dim=2)
             attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
@@ -359,11 +355,9 @@ class SingleStreamBlock_kv(SingleStreamBlock):
         txt_v = v[:, :, :512, ...]
     
 
-        feature_q_name = str(info['t']) + '_' + str(info['id']) + '_' + 'SB' + '_' + 'Q'
         feature_k_name = str(info['t']) + '_' + str(info['id']) + '_' + 'SB' + '_' + 'K'
         feature_v_name = str(info['t']) + '_' + str(info['id']) + '_' + 'SB' + '_' + 'V'
         if info['inverse']:
-            info['feature'][feature_k_name] = img_q.cpu()
             info['feature'][feature_k_name] = img_k.cpu()
             info['feature'][feature_v_name] = img_v.cpu()
             if 'attention_mask' in info:
@@ -372,15 +366,13 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 attn = attention(q, k, v, pe=pe)
             
         else:
-            source_img_q = info['feature'][feature_q_name].to(x.device)
             source_img_k = info['feature'][feature_k_name].to(x.device)
             source_img_v = info['feature'][feature_v_name].to(x.device)
         
             mask_indices = info['mask_indices']
             source_img_k[:, :, mask_indices, ...] = img_k
             source_img_v[:, :, mask_indices, ...] = img_v
-
-            q = torch.cat((txt_q, source_img_q), dim=2)
+            
             k = torch.cat((txt_k, source_img_k), dim=2)
             v = torch.cat((txt_v, source_img_v), dim=2)
             attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
