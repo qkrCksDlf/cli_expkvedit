@@ -275,6 +275,14 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
         img_mod1, img_mod2 = self.img_mod(vec)
         txt_mod1, txt_mod2 = self.txt_mod(vec)
 
+        #for q
+        txt_mod3, txt_mod4 = self.txt_mod(inp_target_s["vec"])
+        txt_modulated_n = self.txt_norm1(inp_target_s["txt"])
+        txt_modulated_n = (1 + txt_mod3.scale) * txt_modulated_n + txt_mod3.shift
+        txt_qkv_n = self.txt_attn.qkv(txt_modulated_n)
+        txt_q_n, txt_k_n, txt_v_n = rearrange(txt_qkv_n, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
+        txt_q_n, txt_k_n = self.txt_attn.norm(txt_q_n, txt_k_n, txt_v_n)
+
         # prepare image for attention
         img_modulated = self.img_norm1(img)
         img_modulated = (1 + img_mod1.scale) * img_modulated + img_mod1.shift
@@ -294,7 +302,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
         if info['inverse']:
             info['feature'][feature_k_name] = img_k.cpu()
             info['feature'][feature_v_name] = img_v.cpu()
-            q = torch.cat((txt_q, img_q), dim=2)
+            q = torch.cat((txt_q_n, img_q), dim=2)
             k = torch.cat((txt_k, img_k), dim=2)
             v = torch.cat((txt_v, img_v), dim=2)
             if 'attention_mask' in info:
