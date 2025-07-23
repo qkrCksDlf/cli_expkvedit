@@ -202,6 +202,7 @@ class Flux_kv_edit(only_Flux):
         #denoise_timesteps = torch.linspace(tx, 0.0, 24 + 1).tolist() #skip_step포함한것.
        
         mask_indices = info['mask_indices']
+        union_mask_indices = info['union_mask_indices']
         if opts.re_init:
             noise = torch.randn_like(zt_r)
             t  = denoise_timesteps[0]
@@ -222,7 +223,7 @@ class Flux_kv_edit(only_Flux):
         info['inverse'] = False
         x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info, info_s=info_s, zt_r=zt_r)
        
-        z0[:, mask_indices,...] = z0[:, mask_indices,...] * (1 - info['mask'][:, mask_indices,...]) + x * info['mask'][:, mask_indices,...]
+        z0[:, union_mask_indices,...] = z0[:, union_mask_indices,...] * (1 - info['union_mask'][:, union_mask_indices,...]) + x * info['union_mask'][:, union_mask_indices,...]
         
         z0 = unpack(z0.float(),  opts.height, opts.width)
         del info
