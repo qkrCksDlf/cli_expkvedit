@@ -407,8 +407,8 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             source_img_v_s = info_s['feature'][feature_v_name].to(x.device)#소스
         
             mask_indices = info['mask_indices']
-            source_img_k_s[:, :, mask_indices, ...] = img_k_s
-            source_img_v_s[:, :, mask_indices, ...] = img_v_s
+            source_img_k_s[:, :, mask_indices, ...] = img_k_r
+            source_img_v_s[:, :, mask_indices, ...] = img_v_r
             
             k = torch.cat((txt_k, source_img_k_s), dim=2)
             v = torch.cat((txt_v, source_img_v_s), dim=2)
