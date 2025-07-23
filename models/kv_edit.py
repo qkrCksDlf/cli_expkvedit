@@ -205,12 +205,12 @@ class Flux_kv_edit(only_Flux):
         if opts.re_init:
             noise = torch.randn_like(zt_r)
             t  = denoise_timesteps[0]
-            zt_noise = z0_r*(1 - t) + noise * t
+            zt_noise = z0*(1 - t) + noise * t
             inp_target["img"] = zt_noise[:, mask_indices,...]
             
         else:
             img_name = str(info['t']) + '_' + 'img'
-            zt_r = info['feature'][img_name].to(zt_r.device)
+            zt_r = info_s['feature'][img_name].to(zt_r.device)
             inp_target["img"] = zt_r[:, mask_indices,...]
             
         if opts.attn_scale != 0 and (~bool_mask).any():
