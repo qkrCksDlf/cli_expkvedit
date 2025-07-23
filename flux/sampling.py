@@ -148,6 +148,7 @@ def denoise_kv(
     info,
     info_s,
     zt_r,
+    inp_target_s,
     guidance: float = 4.0
 ):
 
@@ -177,7 +178,8 @@ def denoise_kv(
             guidance=guidance_vec,
             info=info,
             info_s=info_s,
-            zt_r=zt_r
+            zt_r=zt_r,
+            inp_target_s=inp_target_s
         )
         img = img + (t_prev - t_curr) * pred
     return img, info
