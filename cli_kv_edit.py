@@ -303,7 +303,7 @@ class FluxEditor_CLI:
         t0 = time.perf_counter()
 
         with torch.no_grad():
-            inp_target = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
+            inp_target = prepare(self.t5, self.clip, init_image, prompt=opts.target_prompt)
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
             
             x = self.model.denoise(z0.clone(),z0_r, zt, inp_target, mask, opts, info_r, info)
