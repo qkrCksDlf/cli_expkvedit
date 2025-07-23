@@ -307,11 +307,11 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
         else:
             #for q
             
-            txt_modulated_n = self.txt_norm1(inp_target_s["txt"])
-            txt_modulated_n = (1 + txt_mod1.scale) * txt_modulated_n + txt_mod1.shift
-            txt_qkv_n = self.txt_attn.qkv(txt_modulated_n)
-            txt_q_n, txt_k_n, txt_v_n = rearrange(txt_qkv_n, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
-            txt_q_n, txt_k_n = self.txt_attn.norm(txt_q_n, txt_k_n, txt_v_n)
+            #txt_modulated_n = self.txt_norm1(inp_target_s["txt"])
+            #txt_modulated_n = (1 + txt_mod1.scale) * txt_modulated_n + txt_mod1.shift
+            #txt_qkv_n = self.txt_attn.qkv(txt_modulated_n)
+            #txt_q_n, txt_k_n, txt_v_n = rearrange(txt_qkv_n, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
+            #txt_q_n, txt_k_n = self.txt_attn.norm(txt_q_n, txt_k_n, txt_v_n)
             # 추가
             # prepare image for attention
             img_modulated_r = self.img_norm1(zt_r)
