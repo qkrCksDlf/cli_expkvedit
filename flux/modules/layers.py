@@ -309,7 +309,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             img_modulated_r = (1 + img_mod1.scale) * img_modulated + img_mod1.shift
             img_qkv_r = self.img_attn.qkv(img_modulated_r)
             img_q_r, img_k_r, img_v_r = rearrange(img_qkv_r, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)          
-
+            img_q_r, img_k_r = self.img_attn.norm(img_q_r, img_k_r, img_v_r)
 
 
 
