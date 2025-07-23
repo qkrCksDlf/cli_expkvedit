@@ -212,7 +212,7 @@ class Flux_kv_edit(only_Flux):
         else:
             img_name = str(info['t']) + '_' + 'img'
             zt_r = info_s['feature'][img_name].to(zt_r.device)
-            inp_target["img"] = zt_r[:, union_mask_indices,...]
+            inp_target["img"] = zt_r[:, mask_indices,...]
             
         if opts.attn_scale != 0 and (~bool_mask).any():
             attention_scale = self.create_attention_scale(L+512, mask_indices, device=mask.device,scale = opts.attn_scale)
@@ -223,7 +223,7 @@ class Flux_kv_edit(only_Flux):
         info['inverse'] = False
         x, _ = denoise_kv(self.model, **inp_target, timesteps=denoise_timesteps, guidance=opts.denoise_guidance, inverse=False, info=info, info_s=info_s, zt_r=zt_r)
        
-        z0[:, union_mask_indices,...] = z0[:, union_mask_indices,...] * (1 - info['union_mask'][:, union_mask_indices,...]) + x * info['union_mask'][:, union_mask_indices,...]
+        z0[:, mask_indices,...] = z0[:, mask_indices,...] * (1 - info['mask'][:, mask_indices,...]) + x * info['mask'][:, mask_indices,...]
         
         z0 = unpack(z0.float(),  opts.height, opts.width)
         del info
