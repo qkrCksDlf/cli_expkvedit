@@ -166,7 +166,7 @@ class Flux_kv_edit(only_Flux):
     
     @torch.inference_mode()
     
-    def denoise(self, z0, z0_r, zt_r, inp_target, mask:Tensor, opts, info, info_s, union_mask): #모두 레퍼런스로 넣어줌. info는 소스, z0도 소스. 
+    def denoise(self, z0, z0_r, zt_r, inp_target, mask:Tensor, opts, info, info_s, union_mask:Tensor): #모두 레퍼런스로 넣어줌. info는 소스, z0도 소스. 
         '''
         target 객체를 추가하여 편집하기 위해 수정됨.
         '''
@@ -189,7 +189,7 @@ class Flux_kv_edit(only_Flux):
         info['union_mask'] = union_mask #추가
         
         bool_mask = (mask.sum(dim=2) > 0.5)
-        bool_union_mask = (union_mask.sum((dim=2) > 0.5))
+        bool_union_mask = (union_mask.sum(dim=2) > 0.5)
                            
         info['mask_indices'] = torch.nonzero(bool_mask)[:,1]
         info['union_mask_indices'] = torch.nonzero(bool_union_mask)[:,1]
