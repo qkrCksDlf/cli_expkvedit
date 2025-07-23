@@ -6,5 +6,5 @@ python cli_kv_edit.py \
     --ref_mask_image "ref_mask2.jpg" \
     --source_prompt "a bag is on the floor" \
     --target_prompt "a dog is sitting on the floor" \
-    --re_init
+    --attn_mask
 ```
