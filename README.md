@@ -17,6 +17,5 @@ python cli_kv_edit.py \
     --ref_image "x01.jpg" \
     --ref_mask_image "x03.png" \
     --source_prompt "a brown cat sitting on a pink bed" \
-    --target_prompt "a gray plush husky toy on a pink bed" \
-    --re_init
+    --target_prompt "a gray plush husky toy on a pink bed" 
 ```
