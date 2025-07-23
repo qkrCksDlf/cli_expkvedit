@@ -324,8 +324,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             mask_indices = info['mask_indices'] 
             #source_img_k[:, :, mask_indices, ...] = img_k
             #source_img_v[:, :, mask_indices, ...] = img_v
-            source_img_k_s[:, :, mask_indices, ...] = img_k
-            source_img_v_s[:, :, mask_indices, ...] = img_v
+            source_img_k_s[:, :, mask_indices, ...] = img_k_r
+            source_img_v_s[:, :, mask_indices, ...] = img_v_r
             
             
             
@@ -407,11 +407,11 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             source_img_v_s = info_s['feature'][feature_v_name].to(x.device)#소스
         
             mask_indices = info['mask_indices']
-            source_img_k_s[:, :, mask_indices, ...] = img_k_r
-            source_img_v_s[:, :, mask_indices, ...] = img_v_r
+            source_img_k_s[:, :, mask_indices, ...] = img_k
+            source_img_v_s[:, :, mask_indices, ...] = img_v
             
-            k = torch.cat((txt_k, source_img_k), dim=2)
-            v = torch.cat((txt_v, source_img_v), dim=2)
+            k = torch.cat((txt_k, source_img_k_s), dim=2)
+            v = torch.cat((txt_v, source_img_v_s), dim=2)
             attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
 
         # compute activation in mlp stream, cat again and run second linear layer
