@@ -380,6 +380,9 @@ class SingleStreamBlock_kv(SingleStreamBlock):
 
         feature_k_name = str(info['t']) + '_' + str(info['id']) + '_' + 'SB' + '_' + 'K'
         feature_v_name = str(info['t']) + '_' + str(info['id']) + '_' + 'SB' + '_' + 'V'
+
+
+        
         if info['inverse']:
             info['feature'][feature_k_name] = img_k.cpu()
             info['feature'][feature_v_name] = img_v.cpu()
@@ -389,12 +392,25 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 attn = attention(q, k, v, pe=pe)
             
         else:
-            source_img_k = info['feature'][feature_k_name].to(x.device)
-            source_img_v = info['feature'][feature_v_name].to(x.device)
+            #추가
+            x_mod_r = (1 + mod.scale) * self.pre_norm(zt_r) + mod.shift
+            qkv_r, mlp_r = torch.split(self.linear1(x_mod_r), [3 * self.hidden_size, self.mlp_hidden_dim], dim=-1)
+    
+            q_r, k_r, v_r = rearrange(qkv_r, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
+            q_r, k_r = self.norm(q_r, k_r, v_r)
+            img_k_r = k_r[:, :, 512:, ...]
+            img_v_r = v_r[:, :, 512:, ...]
+            ##################################################
+                
+            source_img_k = info['feature'][feature_k_name].to(x.device) #레퍼런스
+            source_img_v = info['feature'][feature_v_name].to(x.device) #레퍼런스
+
+            source_img_k_s = info_s['feature'][feature_k_name].to(x.device)#소스
+            source_img_v_s = info_s['feature'][feature_v_name].to(x.device)#소스
         
             mask_indices = info['mask_indices']
-            source_img_k[:, :, mask_indices, ...] = img_k
-            source_img_v[:, :, mask_indices, ...] = img_v
+            source_img_k_s[:, :, mask_indices, ...] = img_k_r
+            source_img_v_s[:, :, mask_indices, ...] = img_v_r
             
             k = torch.cat((txt_k, source_img_k), dim=2)
             v = torch.cat((txt_v, source_img_v), dim=2)
