@@ -18,6 +18,6 @@ python cli_kv_edit.py \
     --ref_mask_image "x03.png" \
     --source_prompt "a brown cat sitting on a pink bed" \
     --target_prompt "a gray plush husky toy on a pink bed" \
-    --attn_mask
+    --attn_mask \
     --re_init
 ```
