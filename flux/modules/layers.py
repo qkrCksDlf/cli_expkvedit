@@ -314,8 +314,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
 
 
             
-            #source_img_k = info['feature'][feature_k_name].to(img.device) #레퍼런스
-            #source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
+            source_img_k = info['feature'][feature_k_name].to(img.device) #레퍼런스
+            source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
 
             mask_indices = info['mask_indices'] 
             source_img_k[:, :, mask_indices, ...] = img_k
