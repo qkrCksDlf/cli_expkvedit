@@ -166,7 +166,7 @@ class Flux_kv_edit(only_Flux):
     
     @torch.inference_mode()
     
-    def denoise(self, z0, z0_r, zt_r, inp_target, mask:Tensor, opts, info, info_s): #모두 레퍼런스로 넣어줌. info는 소스, z0도 소스. 
+    def denoise(self, z0, z0_r, zt_r, inp_target, mask:Tensor, opts, info, info_s, union_mask): #모두 레퍼런스로 넣어줌. info는 소스, z0도 소스. 
         '''
         target 객체를 추가하여 편집하기 위해 수정됨.
         '''
@@ -175,14 +175,24 @@ class Flux_kv_edit(only_Flux):
         w = opts.width // 8
         L = h * w // 4 
         mask = F.interpolate(mask, size=(h,w), mode='bilinear', align_corners=False)
+        union_mask = F.interpolate(union_mask, size=(h,w), mode='bilinear', align_corners=False) #추가
         mask[mask > 0] = 1
+        union_mask[union_mask > 0] = 1 #추가
         
         mask = repeat(mask, 'b c h w -> b (repeat c) h w', repeat=16)
+        union_mask = repeat(union_mask, 'b c h w -> b (repeat c) h w', repeat=16) #추가
       
         mask = rearrange(mask, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
+        union_mask = rearrange(union_mask, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2) #추가
+        
         info['mask'] = mask
+        info['union_mask'] = union_mask #추가
+        
         bool_mask = (mask.sum(dim=2) > 0.5)
+        bool_union_mask = (union_mask.sum((dim=2) > 0.5))
+                           
         info['mask_indices'] = torch.nonzero(bool_mask)[:,1]
+        info['union_mask_indices'] = torch.nonzero(bool_union_mask)[:,1]
         
         denoise_timesteps = get_schedule(opts.denoise_num_steps, inp_target["img"].shape[1], shift=(self.name != "flux-schnell"))
         denoise_timesteps = denoise_timesteps[opts.skip_step:]
