@@ -311,6 +311,9 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             img_q_r, img_k_r, img_v_r = rearrange(img_qkv_r, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)          
             img_q_r, img_k_r = self.img_attn.norm(img_q_r, img_k_r, img_v_r)
 
+            t_s = "a brown cat sitting on a pink bed"
+            
+
 
 
             
