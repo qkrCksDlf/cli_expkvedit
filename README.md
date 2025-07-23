@@ -8,3 +8,15 @@ python cli_kv_edit.py \
     --target_prompt "a dog is sitting on the floor" \
     --attn_mask
 ```
+
+
+```
+python cli_kv_edit.py \
+    --input_image "x04.jpg" \
+    --mask_image "x02.png" \
+    --ref_image "x01.jpg" \
+    --ref_mask_image "x03.png" \
+    --source_prompt "a brown cat sitting on a pink bed" \
+    --target_prompt "a gray plush husky toy on a pink bed" \
+    --attn_mask
+```
