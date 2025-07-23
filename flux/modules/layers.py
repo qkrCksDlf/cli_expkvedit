@@ -331,8 +331,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             
             
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
-            k = torch.cat((txt_k, source_img_k), dim=2) 
-            v = torch.cat((txt_v, source_img_v), dim=2)
+            k = torch.cat((txt_k, source_img_k_s), dim=2) 
+            v = torch.cat((txt_v, source_img_v_s), dim=2)
             attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
 
         
