@@ -317,20 +317,24 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             source_img_k = info['feature'][feature_k_name].to(img.device) #레퍼런스
             source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
             source_img_k_s = info_s['feature'][feature_k_name].to(img.device) #소스
-            source_img_v_s = info_s['feature'][feature_s_name].to(img.device) #소스
-            
+            source_img_v_s = info_s['feature'][feature_v_name].to(img.device) #소스
 
             
-
+            #원본
             mask_indices = info['mask_indices'] 
-            source_img_k[:, :, mask_indices, ...] = img_k
-            source_img_v[:, :, mask_indices, ...] = img_v
+            #source_img_k[:, :, mask_indices, ...] = img_k
+            #source_img_v[:, :, mask_indices, ...] = img_v
+
+            #qkv exp
+            source_img_k_s[:, :, mask_indices, ...] = img_k_r
+            source_img_v_s[:, :, mask_indices, ...] = img_v_r
+            
 
             
             
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
-            k = torch.cat((txt_k, source_img_k), dim=2) 
-            v = torch.cat((txt_v, source_img_v), dim=2)
+            k = torch.cat((txt_k, source_img_k_s), dim=2) 
+            v = torch.cat((txt_v, source_img_v_s), dim=2)
             attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
 
         
