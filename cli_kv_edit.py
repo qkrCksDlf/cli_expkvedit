@@ -272,7 +272,7 @@ class FluxEditor_CLI:
         return z0, zt, info
 
     @torch.inference_mode()
-    def edit(self, z0, zt, info, z0_r, zt_r, info_r, init_image, ref_image, mask, opts):
+    def edit(self, z0, zt, info, z0_r, zt_r, info_r, init_image, ref_image, mask, opts, union_mask):
         """
         Perform image editing using the inverted latents
         
@@ -306,7 +306,7 @@ class FluxEditor_CLI:
             inp_target = prepare(self.t5, self.clip, init_image, prompt=opts.target_prompt)
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
             
-            x = self.model.denoise(z0.clone(),z0_r, zt, inp_target, mask, opts, info_r, info)
+            x = self.model.denoise(z0.clone(),z0_r, zt, inp_target, mask, opts, info_r, info, union_mask)
             # 기존 : z0->소스, z0_r->레퍼런스, zt_r->레퍼런스, inp_target2->레퍼런스, mask->타겟*, opts, info->소스  
             # qkv 실험 : z0->소스, z0_r->레퍼런스, zt->소스-, inp_target->소스-, mask->타겟*, opts, info->레퍼런스-
             
@@ -429,7 +429,7 @@ class FluxEditor_CLI:
             z0_r, zt_r, info_r = self.inverse(encoded_image2, mask2 if opts.attn_mask else None, opts, False)
             
             # Perform editing -> mask는 소스/레퍼런스/union 선택.
-            edited_image = self.edit(z0, zt, info, z0_r, zt_r, info_r, encoded_image, encoded_image2, mask2, opts)
+            edited_image = self.edit(z0, zt, info, z0_r, zt_r, info_r, encoded_image, encoded_image2, mask2, opts, union_mask)
             
             
             # Save results
