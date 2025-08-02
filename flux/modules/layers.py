@@ -9,6 +9,48 @@ from flux.math import attention, rope,apply_rope
 
 import os
 
+import os
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+def save_attention_map_to_file(
+    attn_weights: torch.Tensor,
+    q_idx: int,
+    h_idx: int = 0,
+    img_size: tuple = (16, 16),
+    save_dir: str = "attn_maps",
+    filename: str = None,
+    normalize: bool = True
+):
+    """
+    attn_weights: Tensor [B, H, Q, K]
+    q_idx: query index (global)
+    h_idx: head index
+    img_size: attention 대상 이미지 해상도 (e.g., 16x16)
+    save_dir: 저장할 디렉토리
+    filename: 저장 파일명 (None이면 자동 생성)
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    attn_map = attn_weights[0, h_idx, q_idx].detach().cpu().numpy()  # [K]
+    if normalize:
+        attn_map = (attn_map - attn_map.min()) / (attn_map.max() - attn_map.min() + 1e-8)
+
+    if len(attn_map) == img_size[0] * img_size[1]:
+        attn_map = attn_map.reshape(img_size)
+
+    plt.figure(figsize=(4, 4))
+    sns.heatmap(attn_map, cmap="viridis")
+    plt.axis("off")
+
+    if filename is None:
+        filename = f"attn_q{q_idx}_h{h_idx}.png"
+    filepath = os.path.join(save_dir, filename)
+
+    plt.savefig(filepath, bbox_inches="tight", pad_inches=0)
+    plt.close()
+    print(f"✔️ Saved: {filepath}")
 
 class EmbedND(nn.Module):
     def __init__(self, dim: int, theta: int, axes_dim: list[int]):
@@ -345,7 +387,12 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             q = torch.cat((txt_q_n, img_q), dim=2) #소스이미지
             k = torch.cat((txt_k, source_img_k), dim=2) 
             v = torch.cat((txt_v, source_img_v), dim=2)
-            attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
+            attn, wei = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'],w=True)
+
+            # 예: 첫 번째 foreground 토큰에 대한 attention map을 저장
+            q_idx = txt.shape[1] + info["mask_indices"][0]
+            save_attention_map_to_file(wei, q_idx=q_idx, h_idx=0, img_size=(16, 16), save_dir="attn_vis")
+
 
         
         txt_attn, img_attn = attn[:, : txt.shape[1]], attn[:, txt.shape[1] :]
