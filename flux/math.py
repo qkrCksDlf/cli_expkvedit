@@ -3,17 +3,40 @@ from einops import rearrange
 from torch import Tensor
 
 
-def attention(q: Tensor, k: Tensor, v: Tensor, pe: Tensor,pe_q = None, attention_mask = None) -> Tensor:
+# def attention(q: Tensor, k: Tensor, v: Tensor, pe: Tensor,pe_q = None, attention_mask = None) -> Tensor:
+#     if pe_q is None:
+#         q, k = apply_rope(q, k, pe) 
+#         x = torch.nn.functional.scaled_dot_product_attention(q, k, v,attn_mask=attention_mask) 
+#         x = rearrange(x, "B H L D -> B L (H D)")
+#         return x
+#     else: 
+#         q, k = apply_rope_qk(q, k, pe_q, pe) 
+#         x = torch.nn.functional.scaled_dot_product_attention(q, k, v,attn_mask=attention_mask)
+#         x = rearrange(x, "B H L D -> B L (H D)")
+#         return x
+
+
+def attention(q: Tensor, k: Tensor, v: Tensor, pe: Tensor, pe_q=None, attention_mask=None, w=False):
     if pe_q is None:
-        q, k = apply_rope(q, k, pe) 
-        x = torch.nn.functional.scaled_dot_product_attention(q, k, v,attn_mask=attention_mask) 
-        x = rearrange(x, "B H L D -> B L (H D)")
+        q, k = apply_rope(q, k, pe)
+    else:
+        q, k = apply_rope_qk(q, k, pe_q, pe)
+    
+    d_k = q.shape[-1]
+    attn_scores = torch.matmul(q, k.transpose(-2, -1)) / d_k**0.5  # [B, H, Q, K]
+    
+    if attention_mask is not None:
+        attn_scores = attn_scores + attention_mask  # broadcasting
+
+    attn_weights = torch.softmax(attn_scores, dim=-1)  # [B, H, Q, K]
+    x = torch.matmul(attn_weights, v)  # [B, H, Q, D]
+
+    x = rearrange(x, "B H L D -> B L (H D)")
+    if w:
+        return x, attn_weights
+    else:
         return x
-    else: 
-        q, k = apply_rope_qk(q, k, pe_q, pe) 
-        x = torch.nn.functional.scaled_dot_product_attention(q, k, v,attn_mask=attention_mask)
-        x = rearrange(x, "B H L D -> B L (H D)")
-        return x
+
 
 def rope(pos: Tensor, dim: int, theta: int) -> Tensor:
     assert dim % 2 == 0
