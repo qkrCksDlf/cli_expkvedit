@@ -390,12 +390,24 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
             k = torch.cat((txt_k, source_img_k_s), dim=2) 
             v = torch.cat((txt_v, source_img_v_s), dim=2)
-            attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
+            #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
+            attn, attn_weights = attention(
+    q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True
+)
+            q_idx = txt.shape[1] + info["mask_indices"][0]  # 이미지 영역 중 강아지 위치
+            save_attention_map_to_file(
+                attn_weights,
+                q_idx=q_idx,
+                h_idx=0,
+                img_size=(16, 16),
+                save_dir="attn_vis",
+                filename=f"{info['id']}_attn.png"
+            )
 
             # 예: 첫 번째 foreground 토큰에 대한 attention map을 저장
             #q_idx = txt.shape[1] + info["mask_indices"][0]
             #save_attention_map_to_file(wei, q_idx=q_idx, h_idx=0, img_size=(16, 16), save_dir="attn_vis")
-
+            
 
         
         txt_attn, img_attn = attn[:, : txt.shape[1]], attn[:, txt.shape[1] :]
