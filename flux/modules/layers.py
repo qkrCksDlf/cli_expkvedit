@@ -23,17 +23,9 @@ def save_attention_map_to_file(
     filename: str = None,
     normalize: bool = True
 ):
-    """
-    attn_weights: Tensor [B, H, Q, K]
-    q_idx: query index (global)
-    h_idx: head index
-    img_size: attention 대상 이미지 해상도 (e.g., 16x16)
-    save_dir: 저장할 디렉토리
-    filename: 저장 파일명 (None이면 자동 생성)
-    """
     os.makedirs(save_dir, exist_ok=True)
 
-    attn_map = attn_weights[0, h_idx, q_idx].detach().cpu().numpy()  # [K]
+    attn_map = attn_weights[0, h_idx, q_idx].detach().cpu().float().numpy()  # <- 여기 수정
     if normalize:
         attn_map = (attn_map - attn_map.min()) / (attn_map.max() - attn_map.min() + 1e-8)
 
@@ -51,6 +43,7 @@ def save_attention_map_to_file(
     plt.savefig(filepath, bbox_inches="tight", pad_inches=0)
     plt.close()
     print(f"✔️ Saved: {filepath}")
+
 
 class EmbedND(nn.Module):
     def __init__(self, dim: int, theta: int, axes_dim: list[int]):
