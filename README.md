@@ -16,7 +16,7 @@ python cli_kv_edit.py \
     --mask_image "x4.jpg" \
     --ref_image "x3.png" \
     --ref_mask_image "x4.jpg" \
-    --source_prompt "a brown cat sitting on a pink bed" \
-    --target_prompt "a gray plush husky toy on a pink bed" \
+    --source_prompt "a cat is lying on the floor" \
+    --target_prompt "a dog is lying on the floor" \
     --attn_mask
 ```
