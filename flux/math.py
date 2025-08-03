@@ -3,17 +3,54 @@ from einops import rearrange
 from torch import Tensor
 
 
-def attention(q: Tensor, k: Tensor, v: Tensor, pe: Tensor,pe_q = None, attention_mask = None) -> Tensor:
+# def attention(q: Tensor, k: Tensor, v: Tensor, pe: Tensor,pe_q = None, attention_mask = None) -> Tensor:
+#     if pe_q is None:
+#         q, k = apply_rope(q, k, pe) 
+#         x = torch.nn.functional.scaled_dot_product_attention(q, k, v,attn_mask=attention_mask) 
+#         x = rearrange(x, "B H L D -> B L (H D)")
+#         return x
+#     else: 
+#         q, k = apply_rope_qk(q, k, pe_q, pe) 
+#         x = torch.nn.functional.scaled_dot_product_attention(q, k, v,attn_mask=attention_mask)
+#         x = rearrange(x, "B H L D -> B L (H D)")
+#         return x
+
+def attention(
+    q: Tensor, 
+    k: Tensor, 
+    v: Tensor, 
+    pe: Tensor,
+    pe_q: Tensor = None, 
+    attention_mask: Tensor = None,
+    return_weights: bool = False  # ✅ 추가
+) -> Tensor | tuple[Tensor, Tensor]:
+    
     if pe_q is None:
-        q, k = apply_rope(q, k, pe) 
-        x = torch.nn.functional.scaled_dot_product_attention(q, k, v,attn_mask=attention_mask) 
-        x = rearrange(x, "B H L D -> B L (H D)")
-        return x
-    else: 
-        q, k = apply_rope_qk(q, k, pe_q, pe) 
-        x = torch.nn.functional.scaled_dot_product_attention(q, k, v,attn_mask=attention_mask)
-        x = rearrange(x, "B H L D -> B L (H D)")
-        return x
+        q, k = apply_rope(q, k, pe)
+    else:
+        q, k = apply_rope_qk(q, k, pe_q, pe)
+
+    # ⚠️ torch.nn.functional.scaled_dot_product_attention supports return_attn_mask from PyTorch 2.0+
+    if return_weights:
+        # ⚠️ This requires PyTorch 2.0+ and the `is_causal=False` parameter
+        out, attn_weights = torch.nn.functional.scaled_dot_product_attention(
+            q, k, v,
+            attn_mask=attention_mask,
+            dropout_p=0.0,
+            is_causal=False,
+            return_attn=True
+        )
+    else:
+        out = torch.nn.functional.scaled_dot_product_attention(
+            q, k, v,
+            attn_mask=attention_mask
+        )
+        attn_weights = None
+
+    out = rearrange(out, "B H L D -> B L (H D)")
+
+    return (out, attn_weights) if return_weights else out
+
 
 def rope(pos: Tensor, dim: int, theta: int) -> Tensor:
     assert dim % 2 == 0
