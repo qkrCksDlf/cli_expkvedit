@@ -355,6 +355,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             #txt_q_n, txt_k_n, txt_v_n = rearrange(txt_qkv_n, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
             #txt_q_n, txt_k_n = self.txt_attn.norm(txt_q_n, txt_k_n, txt_v_n)
             # 추가
+
+            
             # prepare image for attention
             img_modulated_r = self.img_norm1(zt_r)
             img_modulated_r = (1 + img_mod1.scale) * img_modulated_r + img_mod1.shift
@@ -378,20 +380,21 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             mask_indices = info['mask_indices'] 
             #source_img_k[:, :, mask_indices, ...] = img_k
             #source_img_v[:, :, mask_indices, ...] = img_v
+            
             source_img_k_s[:, :, mask_indices, ...] = img_k_r[:, :, mask_indices, :]
             source_img_v_s[:, :, mask_indices, ...] = img_v_r[:, :, mask_indices, :]
             
             
             
             
-            q = torch.cat((txt_q_n, img_q), dim=2) #소스이미지
-            k = torch.cat((txt_k, source_img_k), dim=2) 
-            v = torch.cat((txt_v, source_img_v), dim=2)
+            q = torch.cat((txt_q, img_q), dim=2) #소스이미지
+            k = torch.cat((txt_k, source_img_k_s), dim=2) 
+            v = torch.cat((txt_v, source_img_v_s), dim=2)
             attn, wei = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'],w=True)
 
             # 예: 첫 번째 foreground 토큰에 대한 attention map을 저장
-            q_idx = txt.shape[1] + info["mask_indices"][0]
-            save_attention_map_to_file(wei, q_idx=q_idx, h_idx=0, img_size=(16, 16), save_dir="attn_vis")
+            #q_idx = txt.shape[1] + info["mask_indices"][0]
+            #save_attention_map_to_file(wei, q_idx=q_idx, h_idx=0, img_size=(16, 16), save_dir="attn_vis")
 
 
         
