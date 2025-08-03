@@ -14,6 +14,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
+import os
+import numpy as np
+import torch
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 def save_attention_map_to_file(
     attn_weights: torch.Tensor,
     q_idx: int,
@@ -21,28 +27,61 @@ def save_attention_map_to_file(
     img_size: tuple = (16, 16),
     save_dir: str = "attn_maps",
     filename: str = None,
-    normalize: bool = True
+    normalize: bool = True,
+    token_offset: int = 0,  # 예: 텍스트 토큰 수 (txt.shape[1])
 ):
+    """
+    시각화 유틸 (BFloat16 및 다양한 shape 안전 지원)
+
+    Parameters:
+    - attn_weights: Tensor [B, H, Q, K]
+    - q_idx: 시각화할 query 인덱스 (예: txt + mask_idx)
+    - h_idx: head index (default=0)
+    - img_size: key가 image라면 그 해상도 (예: 16x16)
+    - save_dir: 저장 폴더
+    - filename: 파일 이름 (None이면 자동 생성)
+    - normalize: 0~1 스케일 정규화 여부
+    - token_offset: 텍스트 토큰 수 → q_idx 추적에 도움
+    """
+
     os.makedirs(save_dir, exist_ok=True)
 
-    attn_map = attn_weights[0, h_idx, q_idx].detach().cpu().float().numpy()  # <- 여기 수정
+    # Safety: bfloat16 → float32
+    attn_map = attn_weights[0, h_idx, q_idx].detach().cpu().float().numpy()
+    attn_map = np.squeeze(attn_map)
+
     if normalize:
         attn_map = (attn_map - attn_map.min()) / (attn_map.max() - attn_map.min() + 1e-8)
 
-    if len(attn_map) == img_size[0] * img_size[1]:
+    # 자동 reshape to image if size matches
+    if attn_map.ndim == 1 and attn_map.size == img_size[0] * img_size[1]:
         attn_map = attn_map.reshape(img_size)
+        is_image = True
+    elif attn_map.ndim == 2:
+        is_image = True
+    else:
+        is_image = False
 
-    plt.figure(figsize=(4, 4))
-    sns.heatmap(attn_map, cmap="viridis")
-    plt.axis("off")
-
+    # 파일명 자동 생성
     if filename is None:
-        filename = f"attn_q{q_idx}_h{h_idx}.png"
+        tag = f"q{q_idx - token_offset}_h{h_idx}" if is_image else f"flat_q{q_idx}_h{h_idx}"
+        filename = f"attn_{tag}.png"
+
     filepath = os.path.join(save_dir, filename)
 
+    # 시각화
+    plt.figure(figsize=(4, 4))
+    if is_image:
+        sns.heatmap(attn_map, cmap="viridis")
+    else:
+        plt.plot(attn_map)
+    plt.axis("off")
+    plt.tight_layout()
     plt.savefig(filepath, bbox_inches="tight", pad_inches=0)
     plt.close()
-    print(f"✔️ Saved: {filepath}")
+
+    print(f"✔️ Saved attention map: {filepath}")
+
 
 
 class EmbedND(nn.Module):
@@ -387,14 +426,14 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             attn, attn_weights = attention(
     q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True
 )
-            q_idx = txt.shape[1] + info["mask_indices"][0]  # 이미지 영역 중 강아지 위치
+            q_idx = txt.shape[1] + info["mask_indices"][0]
             save_attention_map_to_file(
                 attn_weights,
                 q_idx=q_idx,
                 h_idx=0,
                 img_size=(16, 16),
                 save_dir="attn_vis",
-                filename=f"{info['id']}_attn.png"
+                token_offset=txt.shape[1]  # txt 토큰 수
             )
 
             # 예: 첫 번째 foreground 토큰에 대한 attention map을 저장
