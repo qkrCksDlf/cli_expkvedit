@@ -390,7 +390,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
             k = torch.cat((txt_k, source_img_k_s), dim=2) 
             v = torch.cat((txt_v, source_img_v_s), dim=2)
-            attn, wei = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'],w=True)
+            attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
 
             # 예: 첫 번째 foreground 토큰에 대한 attention map을 저장
             #q_idx = txt.shape[1] + info["mask_indices"][0]
