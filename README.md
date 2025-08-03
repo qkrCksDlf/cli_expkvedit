@@ -12,10 +12,10 @@ python cli_kv_edit.py \
 
 ```
 python cli_kv_edit.py \
-    --input_image "x04.jpg" \
-    --mask_image "x02.png" \
-    --ref_image "x01.jpg" \
-    --ref_mask_image "x03.png" \
+    --input_image "x01.jpg" \
+    --mask_image "x04.jpg" \
+    --ref_image "x03.png" \
+    --ref_mask_image "x04.jpg" \
     --source_prompt "a brown cat sitting on a pink bed" \
     --target_prompt "a gray plush husky toy on a pink bed" \
     --attn_mask
