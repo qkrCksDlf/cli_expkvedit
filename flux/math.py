@@ -16,40 +16,34 @@ from torch import Tensor
 #         return x
 
 def attention(
-    q: Tensor, 
-    k: Tensor, 
-    v: Tensor, 
+    q: Tensor,
+    k: Tensor,
+    v: Tensor,
     pe: Tensor,
-    pe_q: Tensor = None, 
+    pe_q: Tensor = None,
     attention_mask: Tensor = None,
-    return_weights: bool = False  # ✅ 추가
+    return_weights: bool = False
 ) -> Tensor | tuple[Tensor, Tensor]:
-    
     if pe_q is None:
         q, k = apply_rope(q, k, pe)
     else:
         q, k = apply_rope_qk(q, k, pe_q, pe)
 
-    # ⚠️ torch.nn.functional.scaled_dot_product_attention supports return_attn_mask from PyTorch 2.0+
-    if return_weights:
-        # ⚠️ This requires PyTorch 2.0+ and the `is_causal=False` parameter
-        out, attn_weights = torch.nn.functional.scaled_dot_product_attention(
-            q, k, v,
-            attn_mask=attention_mask,
-            dropout_p=0.0,
-            is_causal=False,
-            return_attn=True
-        )
-    else:
-        out = torch.nn.functional.scaled_dot_product_attention(
-            q, k, v,
-            attn_mask=attention_mask
-        )
-        attn_weights = None
+    # q, k, v: [B, H, L, D]
+    scale = q.shape[-1] ** 0.5
+    attn_scores = torch.matmul(q, k.transpose(-2, -1)) / scale  # [B, H, Q, K]
 
+    if attention_mask is not None:
+        attn_scores = attn_scores + attention_mask
+
+    attn_weights = torch.softmax(attn_scores, dim=-1)  # [B, H, Q, K]
+    out = torch.matmul(attn_weights, v)  # [B, H, Q, D]
     out = rearrange(out, "B H L D -> B L (H D)")
 
-    return (out, attn_weights) if return_weights else out
+    if return_weights:
+        return out, attn_weights
+    else:
+        return out
 
 
 def rope(pos: Tensor, dim: int, theta: int) -> Tensor:
