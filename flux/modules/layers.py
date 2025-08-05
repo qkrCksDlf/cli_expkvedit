@@ -429,7 +429,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 tokenizer=info['tokenizer'],         # info에 tokenizer 추가되어야 함
                 prompts="a dog is lying on the floor",           # info에 caption도 있어야 함
                 base_dir='attn_overlay',
-                unconditional=False
+                unconditional=False,
+                hw=(48, 32)
             )
 
             
