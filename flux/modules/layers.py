@@ -432,7 +432,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
     q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
     h_idx=0,
     img_size=(16, 16),
-    base_image_path="../../x1.jpg",
+    base_image_path="x1.jpg",
     save_path="attn_overlay/vis1.png"
 )
 
