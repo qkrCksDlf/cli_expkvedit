@@ -305,7 +305,9 @@ class FluxEditor_CLI:
         with torch.no_grad():
             inp_target = prepare(self.t5, self.clip, init_image, prompt=opts.target_prompt)
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
-            inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
+            inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)4
+
+            info['tokenizer'] = self.t5
             
             x = self.model.denoise(z0.clone(),z0_r, zt, inp_target, union_mask, opts, info_r, info, union_mask,inp_target_s)
             # 기존 : z0->소스, z0_r->레퍼런스, zt_r->레퍼런스, inp_target2->레퍼런스, mask->타겟*, opts, info->소스  
