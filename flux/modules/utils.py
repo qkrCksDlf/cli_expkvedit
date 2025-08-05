@@ -184,9 +184,14 @@ def save_attention_image(attn_map, tokens, batch_dir, to_pil):
 def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unconditional=True):
     to_pil = ToPILImage()
     
-    token_ids = tokenizer(prompts)['input_ids']
-    token_ids = token_ids if token_ids and isinstance(token_ids[0], list) else [token_ids]
+    tokenized = tokenizer(prompts, padding='max_length', truncation=True, max_length=77, return_tensors=None)
+    token_ids = tokenized["input_ids"]
+
+    if isinstance(token_ids, torch.Tensor):
+        token_ids = token_ids.tolist()
+    
     total_tokens = [tokenizer.convert_ids_to_tokens(token_id) for token_id in token_ids]
+
     
     os.makedirs(base_dir, exist_ok=True)
     
