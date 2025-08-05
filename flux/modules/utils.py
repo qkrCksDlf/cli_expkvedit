@@ -3,6 +3,11 @@ import os
 import torch
 import torch.nn.functional as F
 from torchvision.transforms import ToPILImage
+import os
+import torch.nn.functional as F
+import numpy as np
+import cv2
+from PIL import Image
 
 from diffusers.models.attention_processor import (
     AttnProcessor,
@@ -181,23 +186,30 @@ def save_attention_image(attn_map, tokens, batch_dir, to_pil):
         to_pil(a.to(torch.float32)).save(os.path.join(batch_dir, f'{i}-{token}.png'))
 
 
-def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unconditional=True):
-    import os
-    import torch
-    import torch.nn.functional as F
-    from torchvision.transforms import ToPILImage
+def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unconditional=True, hw=(48, 32)):
+    """
+    Save attention maps (token-level) as heatmaps.
 
-    to_pil = ToPILImage()
+    Args:
+        attn_maps: Dict[timestep][layer] → Tensor [B, H, Q, K] or [B, Q, K]
+        tokenizer: Tokenizer object (e.g., CLIPTokenizer)
+        prompts: List of prompt strings
+        base_dir: Where to save
+        unconditional: If True, skip unconditional token handling
+        hw: Tuple[int, int] for reshaping attention vectors (e.g., (48, 32) → 1536 = K)
+    """
 
-    # Tokenize prompts → get token strings
+
+
+    h, w = hw
+    os.makedirs(base_dir, exist_ok=True)
+
+    # Tokenize and get text tokens
     tokenized = tokenizer(prompts, padding='max_length', truncation=True, max_length=77, return_tensors="pt")
     input_ids = tokenized["input_ids"]
     if isinstance(input_ids, torch.Tensor):
         input_ids = input_ids.tolist()
-
     total_tokens = [tokenizer.convert_ids_to_tokens(ids) for ids in input_ids]
-
-    os.makedirs(base_dir, exist_ok=True)
 
     total_attn_map = None
     total_attn_map_number = 0
@@ -210,34 +222,26 @@ def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unc
             layer_dir = os.path.join(timestep_dir, f'{layer}')
             os.makedirs(layer_dir, exist_ok=True)
 
-            # Step 1: Normalize shape
-            # attn_map: expected to be (B, H, Q, K) or (B, Q, K)
-            if attn_map.dim() == 4:  # (B, H, Q, K)
-                attn_map = attn_map.sum(1)  # (B, Q, K)
-            elif attn_map.dim() != 3:  # Not (B, Q, K)?
-                raise ValueError(f"Unexpected attn_map shape: {attn_map.shape}")
+            # Normalize attention map shape
+            if attn_map.dim() == 4:
+                attn_map = attn_map.sum(1)  # [B, Q, K]
+            elif attn_map.dim() != 3:
+                raise ValueError(f"Unexpected attention map shape: {attn_map.shape}")
 
             B, Q, K = attn_map.shape
+            if K != h * w:
+                print(f"[Warning] K={K} does not match expected hw=({h}*{w}={h*w}). Skipping...")
+                continue
 
-            # Step 2: Reshape for interpolation (B, 1, Q, K)
-            attn_map = attn_map.unsqueeze(1)
+            attn_map = attn_map.unsqueeze(1)  # (B, 1, Q, K)
 
-            # Step 3: Init total_attn_map shape
             if total_attn_map is None:
                 total_attn_map = torch.zeros_like(attn_map)
 
-            # Optional: interpolate (could resize to consistent shape here if needed)
-            resized_attn_map = F.interpolate(
-                attn_map,
-                size=attn_map.shape[-2:],  # keep original (Q, K)
-                mode='bilinear',
-                align_corners=False
-            )
-
+            resized_attn_map = F.interpolate(attn_map, size=attn_map.shape[-2:], mode='bilinear', align_corners=False)
             total_attn_map += resized_attn_map
             total_attn_map_number += 1
 
-            # Step 4: Save per-token attention images
             for batch_idx, (token_list, attn_2d) in enumerate(zip(total_tokens, attn_map)):
                 batch_dir = os.path.join(layer_dir, f'batch-{batch_idx}')
                 os.makedirs(batch_dir, exist_ok=True)
@@ -245,11 +249,19 @@ def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unc
                 attn_2d = attn_2d.squeeze(0)  # (Q, K)
 
                 for token_idx, (token, attn_vec) in enumerate(zip(token_list, attn_2d)):
-                    token = token.replace("</w>", "")  # optional: clean token
-                    token = token.strip()
-                    to_pil(attn_vec.unsqueeze(0).float()).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
+                    token = token.replace("</w>", "").strip()
+                    attn_np = attn_vec.detach().cpu().float().numpy()
 
-    # Step 5: Save aggregated attention map
+                    if attn_np.shape[0] != h * w:
+                        print(f"[Skip] Token {token} has mismatched shape: {attn_np.shape}")
+                        continue
+
+                    attn_2d_map = attn_np.reshape(h, w)
+                    attn_2d_map = (attn_2d_map - attn_2d_map.min()) / (attn_2d_map.max() - attn_2d_map.min() + 1e-8)
+                    heatmap = cv2.applyColorMap(np.uint8(255 * attn_2d_map), cv2.COLORMAP_JET)
+                    Image.fromarray(heatmap).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
+
+    # Save averaged attention map
     if total_attn_map_number > 0:
         total_attn_map /= total_attn_map_number
 
@@ -259,8 +271,15 @@ def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unc
             attn_map = attn_map.squeeze(0)  # (Q, K)
 
             for token_idx, (token, attn_vec) in enumerate(zip(tokens, attn_map)):
-                token = token.replace("</w>", "")
-                token = token.strip()
-                to_pil(attn_vec.unsqueeze(0).float()).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
+                token = token.replace("</w>", "").strip()
+                attn_np = attn_vec.detach().cpu().float().numpy()
 
+                if attn_np.shape[0] != h * w:
+                    continue
+                attn_2d_map = attn_np.reshape(h, w)
+                attn_2d_map = (attn_2d_map - attn_2d_map.min()) / (attn_2d_map.max() - attn_2d_map.min() + 1e-8)
+                heatmap = cv2.applyColorMap(np.uint8(255 * attn_2d_map), cv2.COLORMAP_JET)
+                Image.fromarray(heatmap).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
+
+    print(f"✅ All attention maps saved in: {base_dir}")
 
