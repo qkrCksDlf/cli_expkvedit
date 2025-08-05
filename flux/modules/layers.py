@@ -27,6 +27,7 @@ import cv2
 import os
 
 def overlay_attention_map(
+    id,
     attn_weights: torch.Tensor,
     q_idx: int,
     h_idx: int = 0,
@@ -75,7 +76,7 @@ def overlay_attention_map(
 
     # 6. overlay
     overlayed = cv2.addWeighted(base_np, 1.0, heatmap_color, alpha, 0)
-
+    save_path = f"attn_overlay/{id}.png"
     # 7. 저장
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     Image.fromarray(overlayed).save(save_path)
@@ -426,6 +427,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
             print("attn_weights shape:", attn_weights.shape)
             overlay_attention_map(
+                str(info['id']),
                 attn_weights=attn_weights,
                 q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
                 h_idx=0,
