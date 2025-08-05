@@ -415,8 +415,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             attn, attn_weights = attention(
     q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True
 )
-        viz_save_path = f"attention_map_t{info['t']}_id{info['id']}.png"
-        visualize_attention_map(attn_weights, save_path=viz_save_path)
+            viz_save_path = f"attention_map_t{info['t']}_id{info['id']}.png"
+            visualize_attention_map(attn_weights, save_path=viz_save_path)
             
 
         
