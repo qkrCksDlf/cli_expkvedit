@@ -20,67 +20,67 @@ import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def save_attention_map_to_file(
+from PIL import Image
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+import os
+
+def overlay_attention_map(
     attn_weights: torch.Tensor,
     q_idx: int,
     h_idx: int = 0,
     img_size: tuple = (16, 16),
-    save_dir: str = "attn_maps",
-    filename: str = None,
-    normalize: bool = True,
-    token_offset: int = 0,  # 예: 텍스트 토큰 수 (txt.shape[1])
+    base_image: Image.Image = None,  # PIL 이미지
+    base_image_path: str = None,     # 경로를 줄 수도 있음
+    save_path: str = "attn_overlay.png",
+    cmap: str = "jet",
+    alpha: float = 0.5,              # heatmap 투명도
+    resize_to_base: bool = True      # 해상도 맞출지
 ):
     """
-    시각화 유틸 (BFloat16 및 다양한 shape 안전 지원)
+    Attention map을 원본 이미지 위에 오버레이합니다.
 
-    Parameters:
     - attn_weights: Tensor [B, H, Q, K]
-    - q_idx: 시각화할 query 인덱스 (예: txt + mask_idx)
-    - h_idx: head index (default=0)
-    - img_size: key가 image라면 그 해상도 (예: 16x16)
-    - save_dir: 저장 폴더
-    - filename: 파일 이름 (None이면 자동 생성)
-    - normalize: 0~1 스케일 정규화 여부
-    - token_offset: 텍스트 토큰 수 → q_idx 추적에 도움
+    - q_idx: 시각화할 query index
+    - h_idx: head index
+    - img_size: attention map size (K = H x W)
+    - base_image: PIL.Image (원본 이미지)
+    - base_image_path: 이미지 경로 (위에 없으면 경로로 로드)
+    - save_path: 저장 경로
     """
 
-    os.makedirs(save_dir, exist_ok=True)
+    assert base_image or base_image_path, "base_image or base_image_path must be provided"
 
-    # Safety: bfloat16 → float32
+    if base_image is None:
+        base_image = Image.open(base_image_path).convert("RGB")
+
+    # 1. attention map 얻기
     attn_map = attn_weights[0, h_idx, q_idx].detach().cpu().float().numpy()
     attn_map = np.squeeze(attn_map)
 
-    if normalize:
-        attn_map = (attn_map - attn_map.min()) / (attn_map.max() - attn_map.min() + 1e-8)
+    # 2. reshape to 2D
+    attn_map = attn_map.reshape(img_size)
 
-    # 자동 reshape to image if size matches
-    if attn_map.ndim == 1 and attn_map.size == img_size[0] * img_size[1]:
-        attn_map = attn_map.reshape(img_size)
-        is_image = True
-    elif attn_map.ndim == 2:
-        is_image = True
-    else:
-        is_image = False
+    # 3. 정규화
+    attn_map = (attn_map - attn_map.min()) / (attn_map.max() - attn_map.min() + 1e-8)
 
-    # 파일명 자동 생성
-    if filename is None:
-        tag = f"q{q_idx - token_offset}_h{h_idx}" if is_image else f"flat_q{q_idx}_h{h_idx}"
-        filename = f"attn_{tag}.png"
+    # 4. resize heatmap to match base image
+    base_np = np.array(base_image)
+    if resize_to_base:
+        attn_map = cv2.resize(attn_map, (base_np.shape[1], base_np.shape[0]))
 
-    filepath = os.path.join(save_dir, filename)
+    # 5. colormap 적용 (e.g., jet)
+    heatmap_color = cv2.applyColorMap(np.uint8(255 * attn_map), getattr(cv2, f'COLORMAP_{cmap.upper()}'))
 
-    # 시각화
-    plt.figure(figsize=(4, 4))
-    if is_image:
-        sns.heatmap(attn_map, cmap="viridis")
-    else:
-        plt.plot(attn_map)
-    plt.axis("off")
-    plt.tight_layout()
-    plt.savefig(filepath, bbox_inches="tight", pad_inches=0)
-    plt.close()
+    # 6. overlay
+    overlayed = cv2.addWeighted(base_np, 1.0, heatmap_color, alpha, 0)
 
-    print(f"✔️ Saved attention map: {filepath}")
+    # 7. 저장
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    Image.fromarray(overlayed).save(save_path)
+    print(f"📸 Attention overlay saved to: {save_path}")
+
 
 
 
@@ -427,14 +427,14 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
     q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True
 )
             q_idx = txt.shape[1] + info["mask_indices"][0]
-            save_attention_map_to_file(
-                attn_weights,
-                q_idx=q_idx,
-                h_idx=0,
-                img_size=(16, 16),
-                save_dir="attn_vis",
-                token_offset=txt.shape[1]  # txt 토큰 수
-            )
+            overlay_attention_map(
+    attn_weights=attn_weights,
+    q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
+    h_idx=0,
+    img_size=(16, 16),
+    base_image_path="path/to/source_image.jpg",
+    save_path="attn_overlay/vis1.png"
+)
 
             # 예: 첫 번째 foreground 토큰에 대한 attention map을 저장
             #q_idx = txt.shape[1] + info["mask_indices"][0]
