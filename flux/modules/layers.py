@@ -26,50 +26,61 @@ import matplotlib.pyplot as plt
 import cv2
 import os
 
-def visualize_attention_map(attn_weights: torch.Tensor, batch_idx: int = 0, save_path: str = None):
+def overlay_attention_map(
+    attn_weights: torch.Tensor,
+    q_idx: int,
+    h_idx: int = 0,
+    img_size: tuple = (48, 32),
+    base_image: Image.Image = None,  # PIL 이미지
+    base_image_path: str = None,     # 경로를 줄 수도 있음
+    save_path: str = "attn_overlay.png",
+    cmap: str = "jet",
+    alpha: float = 0.5,              # heatmap 투명도
+    resize_to_base: bool = True      # 해상도 맞출지
+):
     """
-    Visualizes the attention map for a given sample in the batch.
+    Attention map을 원본 이미지 위에 오버레이합니다.
 
-    The attention map shows the weights assigned by each query token (rows)
-    to each key token (columns).
-
-    Args:
-        attn_weights (torch.Tensor): The attention weights tensor of shape (B, H, L_q, L_k),
-                                     where B=Batch Size, H=Number of Heads, L_q=Query Sequence Length,
-                                     L_k=Key Sequence Length.
-        batch_idx (int): The index of the sample in the batch to visualize.
-        save_path (str, optional): If provided, saves the figure to this path (e.g., 'attention_map.png').
-                                   Defaults to None.
+    - attn_weights: Tensor [B, H, Q, K]
+    - q_idx: 시각화할 query index
+    - h_idx: head index
+    - img_size: attention map size (K = H x W)
+    - base_image: PIL.Image (원본 이미지)
+    - base_image_path: 이미지 경로 (위에 없으면 경로로 로드)
+    - save_path: 저장 경로
     """
-    # 1. Detach the tensor from the computation graph and move it to the CPU.
-    attn_weights = attn_weights.detach().cpu()
 
-    # 2. Select the attention weights for the specified sample in the batch.
-    # Shape changes from (B, H, L_q, L_k) to (H, L_q, L_k).
-    sample_attn = attn_weights[batch_idx]
+    assert base_image or base_image_path, "base_image or base_image_path must be provided"
 
-    # 3. Average the attention weights across all heads.
-    # This gives a summary of where the model is looking, averaged over all attention heads.
-    # Shape changes from (H, L_q, L_k) to (L_q, L_k).
-    avg_attn = torch.mean(sample_attn, dim=0)
+    if base_image is None:
+        base_image = Image.open(base_image_path).convert("RGB")
 
-    # 4. Create the plot.
-    fig, ax = plt.subplots(figsize=(12, 10))
-    im = ax.imshow(avg_attn.numpy(), cmap='viridis', interpolation='nearest')
+    # 1. attention map 얻기
+    attn_map = attn_weights[0, h_idx, q_idx].detach().cpu().float().numpy()
+    attn_map = np.squeeze(attn_map)
 
-    # Add a color bar to show the scale of attention weights.
-    fig.colorbar(im, ax=ax)
+    # 2. reshape to 2D
+    attn_map = attn_map.reshape(img_size)
 
-    ax.set_title(f"Averaged Attention Map (Sample #{batch_idx})")
-    ax.set_xlabel("Key Sequence (Text + Image Patches)")
-    ax.set_ylabel("Query Sequence (Text + Image Patches)")
+    # 3. 정규화
+    attn_map = (attn_map - attn_map.min()) / (attn_map.max() - attn_map.min() + 1e-8)
 
-    # Display the plot
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"Attention map saved to {save_path}")
-    
-    plt.show()
+    # 4. resize heatmap to match base image
+    base_np = np.array(base_image)
+    if resize_to_base:
+        attn_map = cv2.resize(attn_map, (base_np.shape[1], base_np.shape[0]))
+
+    # 5. colormap 적용 (e.g., jet)
+    heatmap_color = cv2.applyColorMap(np.uint8(255 * attn_map), getattr(cv2, f'COLORMAP_{cmap.upper()}'))
+
+    # 6. overlay
+    overlayed = cv2.addWeighted(base_np, 1.0, heatmap_color, alpha, 0)
+
+    # 7. 저장
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    Image.fromarray(overlayed).save(save_path)
+    print(f"📸 Attention overlay saved to: {save_path}")
+
 
 
 
@@ -414,8 +425,14 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
             print("attn_weights shape:", attn_weights.shape)
-            # viz_save_path = f"attention_map_t{info['t']}_id{info['id']}.png"
-            # visualize_attention_map(attn_weights, save_path=viz_save_path)
+            overlay_attention_map(
+                attn_weights=attn_weights,
+                q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
+                h_idx=0,
+                img_size=(48,32),
+                base_image_path="x1.jpg",
+                save_path="attn_overlay/vis1.png"
+)
             
 
         
