@@ -381,25 +381,13 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 attn = attention(q, k, v, pe=pe)
     
         else:
-            #for q
             
-            #txt_modulated_n = self.txt_norm1(inp_target_s["txt"])
-            #txt_modulated_n = (1 + txt_mod1.scale) * txt_modulated_n + txt_mod1.shift
-            #txt_qkv_n = self.txt_attn.qkv(txt_modulated_n)
-            #txt_q_n, txt_k_n, txt_v_n = rearrange(txt_qkv_n, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
-            #txt_q_n, txt_k_n = self.txt_attn.norm(txt_q_n, txt_k_n, txt_v_n)
-            # 추가
-
-            
-            # prepare image for attention
+            # prepare reference image for attention
             img_modulated_r = self.img_norm1(zt_r)
             img_modulated_r = (1 + img_mod1.scale) * img_modulated_r + img_mod1.shift
             img_qkv_r = self.img_attn.qkv(img_modulated_r)
             img_q_r, img_k_r, img_v_r = rearrange(img_qkv_r, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)          
             img_q_r, img_k_r = self.img_attn.norm(img_q_r, img_k_r, img_v_r)
-
-            t_s = "a brown cat sitting on a pink bed"
-            
 
 
 
