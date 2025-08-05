@@ -305,7 +305,7 @@ class FluxEditor_CLI:
         with torch.no_grad():
             inp_target = prepare(self.t5, self.clip, init_image, prompt=opts.target_prompt)
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
-            inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)4
+            inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
 
             info['tokenizer'] = self.t5
             
