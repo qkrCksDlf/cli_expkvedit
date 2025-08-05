@@ -427,7 +427,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             save_attention_maps(
                 attn_maps,
                 tokenizer=info['tokenizer'],         # info에 tokenizer 추가되어야 함
-                prompts="a dog is sitting on the floor",           # info에 caption도 있어야 함
+                prompts="a dog is lying on the floor",           # info에 caption도 있어야 함
                 base_dir='attn_overlay',
                 unconditional=False
             )
