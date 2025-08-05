@@ -182,50 +182,78 @@ def save_attention_image(attn_map, tokens, batch_dir, to_pil):
 
 
 def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unconditional=True):
-    to_pil = ToPILImage()
-    
-    tokenized = tokenizer(prompts, padding='max_length', truncation=True, max_length=77, return_tensors=None)
-    token_ids = tokenized["input_ids"]
+    import torch
+    import torch.nn.functional as F
+    from torchvision.transforms import ToPILImage
+    import os
 
-    if isinstance(token_ids, torch.Tensor):
-        token_ids = token_ids.tolist()
-    
+    to_pil = ToPILImage()
+
+    # Tokenize prompts
+    tokenized = tokenizer(prompts, padding='max_length', truncation=True, max_length=77, return_tensors="pt")
+    token_ids = tokenized["input_ids"].tolist()
     total_tokens = [tokenizer.convert_ids_to_tokens(token_id) for token_id in token_ids]
 
-    
     os.makedirs(base_dir, exist_ok=True)
-    
-    total_attn_map = list(list(attn_maps.values())[0].values())[0].sum(1)
-    if unconditional:
-        total_attn_map = total_attn_map.chunk(2)[1]  # (batch, height, width, attn_dim)
-    total_attn_map = total_attn_map.permute(0, 3, 1, 2)
-    total_attn_map = torch.zeros_like(total_attn_map)
+
+    # Extract one layer to determine base shape
+    first_attn_map = list(list(attn_maps.values())[0].values())[0]
+
+    # Sum over heads if necessary
+    if first_attn_map.dim() == 5:
+        # (B, H, L, N, D) → sum over heads: (B, L, N, D)
+        first_attn_map = first_attn_map.sum(1)
+    elif first_attn_map.dim() == 4:
+        # (B, H, L, D) → sum over heads: (B, L, D)
+        first_attn_map = first_attn_map.sum(1)
+
+    # Ensure 4D (B, C, H, W)
+    if first_attn_map.dim() == 3:  # (B, L, D)
+        first_attn_map = first_attn_map.unsqueeze(1)  # (B, 1, L, D)
+    elif first_attn_map.dim() == 2:
+        first_attn_map = first_attn_map.unsqueeze(0).unsqueeze(0)
+
+    total_attn_map = torch.zeros_like(first_attn_map)
     total_attn_map_shape = total_attn_map.shape[-2:]
     total_attn_map_number = 0
-    
+
     for timestep, layers in attn_maps.items():
         timestep_dir = os.path.join(base_dir, f'{timestep}')
         os.makedirs(timestep_dir, exist_ok=True)
-        
+
         for layer, attn_map in layers.items():
             layer_dir = os.path.join(timestep_dir, f'{layer}')
             os.makedirs(layer_dir, exist_ok=True)
-            
-            attn_map = attn_map.sum(1).squeeze(1).permute(0, 3, 1, 2)
-            if unconditional:
-                attn_map = attn_map.chunk(2)[1]
-            
-            resized_attn_map = F.interpolate(attn_map, size=total_attn_map_shape, mode='bilinear', align_corners=False)
+
+            if attn_map.dim() == 5:
+                attn_map = attn_map.sum(1).squeeze(1).permute(0, 3, 1, 2)  # (B, D, H, W)
+            elif attn_map.dim() == 4:
+                attn_map = attn_map.sum(1).squeeze(1)  # (B, L, D)
+                attn_map = attn_map.unsqueeze(1).permute(0, 3, 1, 2) if attn_map.dim() == 3 else attn_map
+            elif attn_map.dim() == 3:
+                attn_map = attn_map.unsqueeze(1)  # (B, 1, H, W)
+            elif attn_map.dim() == 2:
+                attn_map = attn_map.unsqueeze(0).unsqueeze(0)
+
+            resized_attn_map = F.interpolate(
+                attn_map,
+                size=total_attn_map_shape,
+                mode='bilinear',
+                align_corners=False
+            )
+
             total_attn_map += resized_attn_map
             total_attn_map_number += 1
-            
+
+            # Save per-token images
             for batch, (tokens, attn) in enumerate(zip(total_tokens, attn_map)):
                 batch_dir = os.path.join(layer_dir, f'batch-{batch}')
                 os.makedirs(batch_dir, exist_ok=True)
-                save_attention_image(attn, tokens, batch_dir, to_pil)
-    
+                save_attention_image(attn.squeeze(0), tokens, batch_dir, to_pil)
+
     total_attn_map /= total_attn_map_number
     for batch, (attn_map, tokens) in enumerate(zip(total_attn_map, total_tokens)):
         batch_dir = os.path.join(base_dir, f'batch-{batch}')
         os.makedirs(batch_dir, exist_ok=True)
         save_attention_image(attn_map, tokens, batch_dir, to_pil)
+
