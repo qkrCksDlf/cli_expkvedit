@@ -247,7 +247,7 @@ def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unc
                 for token_idx, (token, attn_vec) in enumerate(zip(token_list, attn_2d)):
                     token = token.replace("</w>", "")  # optional: clean token
                     token = token.strip()
-                    to_pil(attn_vec.unsqueeze(0)).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
+                    to_pil(attn_vec.unsqueeze(0).float()).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
 
     # Step 5: Save aggregated attention map
     if total_attn_map_number > 0:
@@ -261,6 +261,6 @@ def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unc
             for token_idx, (token, attn_vec) in enumerate(zip(tokens, attn_map)):
                 token = token.replace("</w>", "")
                 token = token.strip()
-                to_pil(attn_vec.unsqueeze(0)).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
+                to_pil(attn_vec.unsqueeze(0).float()).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
 
 
