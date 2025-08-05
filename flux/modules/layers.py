@@ -19,7 +19,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
-from utils import attn_maps, save_attention_maps
+from .utils import attn_maps, save_attention_maps
 
 from PIL import Image
 import numpy as np
