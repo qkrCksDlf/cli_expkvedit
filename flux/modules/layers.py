@@ -412,11 +412,10 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             k = torch.cat((txt_k, source_img_k_s), dim=2) 
             v = torch.cat((txt_v, source_img_v_s), dim=2)
             #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
-            attn, attn_weights = attention(
-    q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True
-)
-            viz_save_path = f"attention_map_t{info['t']}_id{info['id']}.png"
-            visualize_attention_map(attn_weights, save_path=viz_save_path)
+            attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
+            print("attn_weights shape:", attn_weights.shape)
+            # viz_save_path = f"attention_map_t{info['t']}_id{info['id']}.png"
+            # visualize_attention_map(attn_weights, save_path=viz_save_path)
             
 
         
