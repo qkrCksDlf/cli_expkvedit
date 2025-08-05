@@ -19,6 +19,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
+from utils import attn_maps, save_attention_maps
 
 from PIL import Image
 import numpy as np
@@ -417,18 +418,31 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             
             #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
+            layer_name = f"{info['id']}_{info['t']}_DoubleStreamBlock_kv"
+            timestep = 0  # 혹시 모를 다중 저장 대비
+
+            # 1. attention weights 저장
+            attn_maps[timestep] = attn_maps.get(timestep, dict())
+            attn_maps[timestep][layer_name] = attn_weights.detach().cpu()
+            save_attention_maps(
+                attn_maps,
+                tokenizer=info['tokenizer'],         # info에 tokenizer 추가되어야 함
+                prompts="a dog is sitting on the floor",           # info에 caption도 있어야 함
+                base_dir='attn_overlay',
+                unconditional=False
+            )
 
             
-            overlay_attention_map(
-                str(info['id']),
-                str(info['t']),
-                attn_weights=attn_weights,
-                q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
-                h_idx=0,
-                img_size=(48,32),
-                base_image_path="x1.jpg",
-                save_path="attn_overlay/vis1.png"
-)
+#             #overlay_attention_map(
+#                 str(info['id']),
+#                 str(info['t']),
+#                 attn_weights=attn_weights,
+#                 q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
+#                 h_idx=0,
+#                 img_size=(48,32),
+#                 base_image_path="x1.jpg",
+#                 save_path="attn_overlay/vis1.png"
+# )
             
 
         
