@@ -182,39 +182,24 @@ def save_attention_image(attn_map, tokens, batch_dir, to_pil):
 
 
 def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unconditional=True):
+    import os
     import torch
     import torch.nn.functional as F
     from torchvision.transforms import ToPILImage
-    import os
 
     to_pil = ToPILImage()
 
-    # Tokenize prompts
+    # Tokenize prompts → get token strings
     tokenized = tokenizer(prompts, padding='max_length', truncation=True, max_length=77, return_tensors="pt")
-    token_ids = tokenized["input_ids"].tolist()
-    total_tokens = [tokenizer.convert_ids_to_tokens(token_id) for token_id in token_ids]
+    input_ids = tokenized["input_ids"]
+    if isinstance(input_ids, torch.Tensor):
+        input_ids = input_ids.tolist()
+
+    total_tokens = [tokenizer.convert_ids_to_tokens(ids) for ids in input_ids]
 
     os.makedirs(base_dir, exist_ok=True)
 
-    # Extract one layer to determine base shape
-    first_attn_map = list(list(attn_maps.values())[0].values())[0]
-
-    # Sum over heads if necessary
-    if first_attn_map.dim() == 5:
-        # (B, H, L, N, D) → sum over heads: (B, L, N, D)
-        first_attn_map = first_attn_map.sum(1)
-    elif first_attn_map.dim() == 4:
-        # (B, H, L, D) → sum over heads: (B, L, D)
-        first_attn_map = first_attn_map.sum(1)
-
-    # Ensure 4D (B, C, H, W)
-    if first_attn_map.dim() == 3:  # (B, L, D)
-        first_attn_map = first_attn_map.unsqueeze(1)  # (B, 1, L, D)
-    elif first_attn_map.dim() == 2:
-        first_attn_map = first_attn_map.unsqueeze(0).unsqueeze(0)
-
-    total_attn_map = torch.zeros_like(first_attn_map)
-    total_attn_map_shape = total_attn_map.shape[-2:]
+    total_attn_map = None
     total_attn_map_number = 0
 
     for timestep, layers in attn_maps.items():
@@ -225,19 +210,26 @@ def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unc
             layer_dir = os.path.join(timestep_dir, f'{layer}')
             os.makedirs(layer_dir, exist_ok=True)
 
-            if attn_map.dim() == 5:
-                attn_map = attn_map.sum(1).squeeze(1).permute(0, 3, 1, 2)  # (B, D, H, W)
-            elif attn_map.dim() == 4:
-                attn_map = attn_map.sum(1).squeeze(1)  # (B, L, D)
-                attn_map = attn_map.unsqueeze(1).permute(0, 3, 1, 2) if attn_map.dim() == 3 else attn_map
-            elif attn_map.dim() == 3:
-                attn_map = attn_map.unsqueeze(1)  # (B, 1, H, W)
-            elif attn_map.dim() == 2:
-                attn_map = attn_map.unsqueeze(0).unsqueeze(0)
+            # Step 1: Normalize shape
+            # attn_map: expected to be (B, H, Q, K) or (B, Q, K)
+            if attn_map.dim() == 4:  # (B, H, Q, K)
+                attn_map = attn_map.sum(1)  # (B, Q, K)
+            elif attn_map.dim() != 3:  # Not (B, Q, K)?
+                raise ValueError(f"Unexpected attn_map shape: {attn_map.shape}")
 
+            B, Q, K = attn_map.shape
+
+            # Step 2: Reshape for interpolation (B, 1, Q, K)
+            attn_map = attn_map.unsqueeze(1)
+
+            # Step 3: Init total_attn_map shape
+            if total_attn_map is None:
+                total_attn_map = torch.zeros_like(attn_map)
+
+            # Optional: interpolate (could resize to consistent shape here if needed)
             resized_attn_map = F.interpolate(
                 attn_map,
-                size=total_attn_map_shape,
+                size=attn_map.shape[-2:],  # keep original (Q, K)
                 mode='bilinear',
                 align_corners=False
             )
@@ -245,15 +237,30 @@ def save_attention_maps(attn_maps, tokenizer, prompts, base_dir='attn_maps', unc
             total_attn_map += resized_attn_map
             total_attn_map_number += 1
 
-            # Save per-token images
-            for batch, (tokens, attn) in enumerate(zip(total_tokens, attn_map)):
-                batch_dir = os.path.join(layer_dir, f'batch-{batch}')
+            # Step 4: Save per-token attention images
+            for batch_idx, (token_list, attn_2d) in enumerate(zip(total_tokens, attn_map)):
+                batch_dir = os.path.join(layer_dir, f'batch-{batch_idx}')
                 os.makedirs(batch_dir, exist_ok=True)
-                save_attention_image(attn.squeeze(0), tokens, batch_dir, to_pil)
 
-    total_attn_map /= total_attn_map_number
-    for batch, (attn_map, tokens) in enumerate(zip(total_attn_map, total_tokens)):
-        batch_dir = os.path.join(base_dir, f'batch-{batch}')
-        os.makedirs(batch_dir, exist_ok=True)
-        save_attention_image(attn_map, tokens, batch_dir, to_pil)
+                attn_2d = attn_2d.squeeze(0)  # (Q, K)
+
+                for token_idx, (token, attn_vec) in enumerate(zip(token_list, attn_2d)):
+                    token = token.replace("</w>", "")  # optional: clean token
+                    token = token.strip()
+                    to_pil(attn_vec.unsqueeze(0)).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
+
+    # Step 5: Save aggregated attention map
+    if total_attn_map_number > 0:
+        total_attn_map /= total_attn_map_number
+
+        for batch_idx, (attn_map, tokens) in enumerate(zip(total_attn_map, total_tokens)):
+            batch_dir = os.path.join(base_dir, f'batch-{batch_idx}')
+            os.makedirs(batch_dir, exist_ok=True)
+            attn_map = attn_map.squeeze(0)  # (Q, K)
+
+            for token_idx, (token, attn_vec) in enumerate(zip(tokens, attn_map)):
+                token = token.replace("</w>", "")
+                token = token.strip()
+                to_pil(attn_vec.unsqueeze(0)).save(os.path.join(batch_dir, f"{token_idx}-{token}.png"))
+
 
