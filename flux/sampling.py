@@ -174,7 +174,6 @@ def denoise_kv(
             print(img.shape)
             print(zt_r.shape)
             input()
-            print("이거 맞는데")
         pred = model(
             img=img,
             img_ids=img_ids,
