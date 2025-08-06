@@ -396,6 +396,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             print("k_r")
             print(img_k_r.shape)
             print(img_k.shape)
+            input()
             
 
 
