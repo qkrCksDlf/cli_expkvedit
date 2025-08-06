@@ -352,10 +352,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
         img_mod1, img_mod2 = self.img_mod(vec)
         txt_mod1, txt_mod2 = self.txt_mod(vec)
         print(img.shape, zt_r.shape)
-            
-
         
-
         # prepare image for attention
         img_modulated = self.img_norm1(img)
         img_modulated = (1 + img_mod1.scale) * img_modulated + img_mod1.shift
@@ -402,13 +399,12 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
             source_img_k_s = info_s['feature'][feature_k_name].to(img.device) #소스
             source_img_v_s = info_s['feature'][feature_v_name].to(img.device) #소스
-
+        
             
             #원본
             mask_indices = info['mask_indices'] 
             #source_img_k[:, :, mask_indices, ...] = img_k
             #source_img_v[:, :, mask_indices, ...] = img_v
-            
             source_img_k_s[:, :, mask_indices, ...] = img_k_r
             source_img_v_s[:, :, mask_indices, ...] = img_v_r
 
@@ -425,7 +421,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
 
             #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
-
+            print("완")
+            input()
             '''
             =================================================================================================================================
             text and image attention 관련 
@@ -449,16 +446,16 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             '''
 
             
-            overlay_attention_map(
-                str(info['id']),
-                str(info['t']),
-                attn_weights=attn_weights,
-                q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
-                h_idx=0,
-                img_size=(48,32),
-                base_image_path="011.png",
-                save_path="attn_overlay/vis1.png"
-)
+#             overlay_attention_map(
+#                 str(info['id']),
+#                 str(info['t']),
+#                 attn_weights=attn_weights,
+#                 q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
+#                 h_idx=0,
+#                 img_size=(48,32),
+#                 base_image_path="011.png",
+#                 save_path="attn_overlay/vis1.png"
+# )
             
 
         
