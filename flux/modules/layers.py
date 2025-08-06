@@ -512,16 +512,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 attn = attention(q, k, v, pe=pe)
             
         else:
-            #추가
-            x_mod_r = (1 + mod.scale) * self.pre_norm(zt_r) + mod.shift
-            qkv_r, mlp_r = torch.split(self.linear1(x_mod_r), [3 * self.hidden_size, self.mlp_hidden_dim], dim=-1)
-    
-            q_r, k_r, v_r = rearrange(qkv_r, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
-            q_r, k_r = self.norm(q_r, k_r, v_r)
-            img_k_r = k_r[:, :, 512:, ...]
-            img_v_r = v_r[:, :, 512:, ...]
-            ##################################################
-                
+            
             source_img_k = info['feature'][feature_k_name].to(x.device) #레퍼런스
             source_img_v = info['feature'][feature_v_name].to(x.device) #레퍼런스
 
@@ -530,10 +521,10 @@ class SingleStreamBlock_kv(SingleStreamBlock):
         
             mask_indices = info['mask_indices']
             #원래는 이렇게 했음
-            source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-            source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
-            #source_img_k_s[:, :, mask_indices, ...] = img_k
-            #source_img_v_s[:, :, mask_indices, ...] = img_v
+            #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+            #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
+            source_img_k_s[:, :, mask_indices, ...] = img_k
+            source_img_v_s[:, :, mask_indices, ...] = img_v
             
             
             k = torch.cat((txt_k, source_img_k_s), dim=2)
