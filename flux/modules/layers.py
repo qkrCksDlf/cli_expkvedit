@@ -351,6 +351,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
     def forward(self, img: Tensor, txt: Tensor, vec: Tensor, pe: Tensor, info, info_s, zt_r, inp_target_s) -> tuple[Tensor, Tensor]:
         img_mod1, img_mod2 = self.img_mod(vec)
         txt_mod1, txt_mod2 = self.txt_mod(vec)
+        print(img.shape, zt_r.shape)
+        input()
 
         
 
