@@ -166,18 +166,14 @@ def denoise_kv(
             info['feature'][img_name] = img.cpu()
         else:
             mask_indices = info['mask_indices']
-            print(img.shape)
             zt_r2= zt_r[:, mask_indices,...]
-            print(zt_r2.shape)
-            input()
             img_name = str(info['t']) + '_' + 'img'
             source_img = info_s['feature'][img_name].to(img.device)
             img = source_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + img * info['mask'][:, info['mask_indices'],...]
-            
-            
-            
-            zt_r = source_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + zt_r['mask_indices'] * info['mask'][:, info['mask_indices'],...]
-            
+            zt_r = source_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + zt_r2 * info['mask'][:, info['mask_indices'],...]
+            print(img.shape)
+            print(zt_r.shape)
+            input()
             print("이거 맞는데")
         pred = model(
             img=img,
