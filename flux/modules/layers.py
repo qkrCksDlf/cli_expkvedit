@@ -421,8 +421,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
 
             #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
-            print("완")
-            input()
+            
             '''
             =================================================================================================================================
             text and image attention 관련 
@@ -531,10 +530,10 @@ class SingleStreamBlock_kv(SingleStreamBlock):
         
             mask_indices = info['mask_indices']
             #원래는 이렇게 했음
-            #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-            #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
-            source_img_k_s[:, :, mask_indices, ...] = img_k
-            source_img_v_s[:, :, mask_indices, ...] = img_v
+            source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+            source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
+            #source_img_k_s[:, :, mask_indices, ...] = img_k
+            #source_img_v_s[:, :, mask_indices, ...] = img_v
             
             
             k = torch.cat((txt_k, source_img_k_s), dim=2)
