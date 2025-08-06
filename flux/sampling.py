@@ -158,6 +158,7 @@ def denoise_kv(
     guidance_vec = torch.full((img.shape[0],), guidance, device=img.device, dtype=img.dtype)
 
     if not inverse:
+        mask_indices = info['mask_indices']
         zt_r= zt_r[:, mask_indices,...]
         
     
