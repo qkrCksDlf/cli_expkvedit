@@ -393,10 +393,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             img_qkv_r = self.img_attn.qkv(img_modulated_r)
             img_q_r, img_k_r, img_v_r = rearrange(img_qkv_r, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)          
             img_q_r, img_k_r = self.img_attn.norm(img_q_r, img_k_r, img_v_r)
-            print("k_r")
-            print(img_k_r.shape)
-            print(img_k.shape)
-            input()
+            
             
 
 
