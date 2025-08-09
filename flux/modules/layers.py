@@ -381,6 +381,11 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 attn = attention(q, k, v, pe=pe)
     
         else:
+
+            source_img_k = info['feature'][feature_k_name].to(img.device) #레퍼런스
+            source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
+            
+            
             img_mod1, img_mod2 = self.img_mod(vec)
             txt_mod1, txt_mod2 = self.txt_mod(vec)
             # prepare reference image for attention
@@ -392,11 +397,6 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             
             
 
-
-
-            
-            source_img_k = info['feature'][feature_k_name].to(img.device) #레퍼런스
-            source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
             source_img_k_s = info_s['feature'][feature_k_name].to(img.device) #소스
             source_img_v_s = info_s['feature'][feature_v_name].to(img.device) #소스
         
