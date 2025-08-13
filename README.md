@@ -28,7 +28,7 @@ python cli_kv_edit.py \
     --mask_image "simg_00_mask.png" \
     --ref_image "k.jpg" \
     --ref_mask_image "k_mask.jpg" \
-    --source_prompt "a cat is lying on the floor" \
-    --target_prompt "a dog is lying on the floor" \
+    --source_prompt "a cat is on a pink bed" \
+    --target_prompt "a husky toy on a pink bed " \
     --attn_mask
 ```
