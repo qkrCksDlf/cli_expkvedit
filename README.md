@@ -30,5 +30,6 @@ python cli_kv_edit.py \
     --ref_mask_image "k_mask.jpg" \
     --source_prompt "a cat is on a pink bed" \
     --target_prompt "a husky toy on a pink bed " \
-    --attn_mask
+    --attn_mask \
+    --re_init
 ```
