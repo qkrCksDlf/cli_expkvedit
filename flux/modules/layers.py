@@ -382,8 +382,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
     
         else:
 
-            source_img_k = info['feature'][feature_k_name].to(img.device) #레퍼런스
-            source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
+            
             
             
             img_mod1, img_mod2 = self.img_mod(vec)
@@ -396,7 +395,9 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             img_q_r, img_k_r = self.img_attn.norm(img_q_r, img_k_r, img_v_r)
             
             
-
+            source_img_k = info['feature'][feature_k_name].to(img.device) #레퍼런스
+            source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
+            
             source_img_k_s = info_s['feature'][feature_k_name].to(img.device) #소스
             source_img_v_s = info_s['feature'][feature_v_name].to(img.device) #소스
         
