@@ -21,3 +21,14 @@ python cli_kv_edit.py \
     --target_prompt "a dog is lying on the floor" \
     --attn_mask
 ```
+
+```
+python cli_kv_edit.py \
+    --input_image "Mailab/data/source/simg_00.jpg" \
+    --mask_image "Mailab/data/s_mask/simg_00_mask.jpg" \
+    --ref_image "k.jpg" \
+    --ref_mask_image "k_mask.jpg" \
+    --source_prompt "a cat is lying on the floor" \
+    --target_prompt "a dog is lying on the floor" \
+    --attn_mask
+```
