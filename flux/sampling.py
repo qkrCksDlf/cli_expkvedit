@@ -177,8 +177,8 @@ def denoise_kv(
         else:
             mask_indices = info['mask_indices']
             img_name = str(info['t']) + '_' + 'img'
-            
-            #img = source_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + img * info['mask'][:, info['mask_indices'],...]
+            source_img = info_s['feature'][img_name].to(img.device)
+            img = source_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + img * info['mask'][:, info['mask_indices'],...]
             
         pred = model(
             img=img,
