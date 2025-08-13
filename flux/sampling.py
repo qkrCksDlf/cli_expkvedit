@@ -165,6 +165,7 @@ def denoise_kv(
             img_name = str(info['t']) + '_' + 'img'
             info['feature'][img_name] = img.cpu()
         else:
+            mask_indices = info['mask_indices']
             print(img.shape)
             zt_r2= zt_r[:, mask_indices,...]
             print(zt_r2.shape)
