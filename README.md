@@ -25,7 +25,7 @@ python cli_kv_edit.py \
 ```
 python cli_kv_edit.py \
     --input_image "simg_00.jpg" \
-    --mask_image "simg_00_mask.jpg" \
+    --mask_image "simg_00_mask.png" \
     --ref_image "k.jpg" \
     --ref_mask_image "k_mask.jpg" \
     --source_prompt "a cat is lying on the floor" \
