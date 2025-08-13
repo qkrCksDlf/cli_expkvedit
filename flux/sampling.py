@@ -160,9 +160,9 @@ def denoise_kv(
     if not inverse:
         img_name = str(info['t']) + '_' + 'img'
         mask_indices = info['mask_indices']
-        zt_r= zt_r[:, mask_indices,...]
+        zt_r2= zt_r[:, mask_indices,...]
         tar_img = info['feature'][img_name].to(img.device)
-        zt_r = tar_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + zt_r * info['mask'][:, info['mask_indices'],...]
+        zt_r = tar_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + zt_r2 * info['mask'][:, info['mask_indices'],...]
         
         
     
