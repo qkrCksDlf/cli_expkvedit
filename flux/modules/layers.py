@@ -409,6 +409,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
 
             print(source_img_k_s[:, :, mask_indices, ...].shape, img_k_r[:, :, mask_indices, ...].shape)
             input()
+            img_k_r = img_k_r.to(img.device)
+            img_v_r = img_v_r.to(img.device)
             source_img_k_s[:, :, mask_indices, ...] = img_k_r[:, :, mask_indices, ...]
             source_img_k_s[:, :, mask_indices, ...] = img_v_r[:, :, mask_indices, ...]
             
