@@ -405,20 +405,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
 
             
             source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-            source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
-
-            print(source_img_k_s[:, :, mask_indices, ...].shape, img_k_r[:, :, mask_indices, ...].shape)
-            input()
-            img_k_r = img_k_r.to(img.device)
-            img_v_r = img_v_r.to(img.device)
-            source_img_k_s[:, :, mask_indices, ...] = img_k_r[:, :, mask_indices, ...]
-            source_img_k_s[:, :, mask_indices, ...] = img_v_r[:, :, mask_indices, ...]
-            
-
-
-            
-            
-            
+            source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]   
             
             
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
@@ -426,46 +413,10 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             v = torch.cat((txt_v, source_img_v_s), dim=2)
 
 
-
             #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
-            attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
-            
-            '''
-            =================================================================================================================================
-            text and image attention 관련 
-            '''
-            #layer_name = f"{info['id']}_{info['t']}_DoubleStreamBlock_kv"
-            #timestep = 0  # 혹시 모를 다중 저장 대비
-            
-            # 1. attention weights 저장
-            #attn_maps[timestep] = attn_maps.get(timestep, dict())
-            #attn_maps[timestep][layer_name] = attn_weights.detach().cpu()
-            # save_attention_maps(
-            #     attn_maps,
-            #     tokenizer=info['tokenizer'],         # info에 tokenizer 추가되어야 함
-            #     prompts="a dog is lying on the floor",           # info에 caption도 있어야 함
-            #     base_dir='attn_overlay',
-            #     token_filter='dog',
-            #     hw=(48, 32)
-            # )
-            '''
-            =================================================================================================================================
-            '''
-
-            
-#             overlay_attention_map(
-#                 str(info['id']),
-#                 str(info['t']),
-#                 attn_weights=attn_weights,
-#                 q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
-#                 h_idx=0,
-#                 img_size=(48,32),
-#                 base_image_path="011.png",
-#                 save_path="attn_overlay/vis1.png"
-# )
+            attn = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'])
             
 
-        
         txt_attn, img_attn = attn[:, : txt.shape[1]], attn[:, txt.shape[1] :]
 
         # calculate the img bloks
@@ -528,7 +479,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             source_img_v_s = info_s['feature'][feature_v_name].to(x.device)#소스
         
             mask_indices = info['mask_indices']
-            #원래는 이렇게 했음
+            
             #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
             #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
             source_img_k_s[:, :, mask_indices, ...] = img_k
