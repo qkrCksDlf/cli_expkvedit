@@ -431,8 +431,8 @@ class FluxEditor_CLI:
             encoded_image2 = self.encode(ref_image, self.device[1]).to(self.device[0])
             
             # Perform inversion
-            z0, zt, info = self.inverse(encoded_image, mask if opts.attn_mask else None, opts)
-            z0_r, zt_r, info_r = self.inverse(encoded_image2, mask2 if opts.attn_mask else None, opts, False)
+            z0, zt, info = self.inverse(encoded_image, union_mask if opts.attn_mask else None, opts)
+            z0_r, zt_r, info_r = self.inverse(encoded_image2, union_mask if opts.attn_mask else None, opts, False)
             
             # Perform editing -> mask는 소스/레퍼런스/union 선택.
             edited_image = self.edit(z0, zt, info, z0_r, zt_r, info_r, encoded_image, encoded_image2, mask2, opts, union_mask)
