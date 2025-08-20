@@ -309,10 +309,10 @@ class FluxEditor_CLI:
             from transformers import CLIPTokenizer
 
             # 1. 진짜 CLIP tokenizer 직접 불러오기
-            tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
-            info_r['tokenizer'] = tokenizer
+            # tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
+            # info_r['tokenizer'] = tokenizer
             
-            x = self.model.denoise(z0.clone(),z0_r, zt, inp_target, union_mask, opts, info_r, info, union_mask,inp_target_s)
+            x = self.model.denoise(z0.clone(),z0_r, zt_r, inp_target, union_mask, opts, info_r, info, union_mask,inp_target_s)
             # 기존 : z0->소스, z0_r->레퍼런스, zt_r->레퍼런스, inp_target2->레퍼런스, mask->타겟*, opts, info->소스  
             # qkv 실험 : z0->소스, z0_r->레퍼런스, zt->소스-, inp_target->소스-, mask->타겟*, opts, info->레퍼런스-
             
