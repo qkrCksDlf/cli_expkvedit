@@ -7,7 +7,7 @@ python cli_kv_edit.py \
     --source_prompt "a bag is on the floor" \
     --target_prompt "a dog is sitting on the floor" \
     --attn_mask \
-    --re_init
+    ----denoise_num_steps 35
 ```
 
 
