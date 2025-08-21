@@ -160,17 +160,15 @@ def denoise_kv(
     if not inverse:
         img_name = str(info['t']) + '_' + 'img'
         mask_indices = info['mask_indices']
-        
+        zt_r= zt_r[:, mask_indices,...]
         tar_img = info['feature'][img_name].to(img.device)
-        zt_r2= tar_img[:, mask_indices,...]
-        zt_r = tar_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + zt_r2 * info['mask'][:, info['mask_indices'],...]
+        zt_r = tar_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + zt_r * info['mask'][:, info['mask_indices'],...]
         
         
     
     for i, (t_curr, t_prev) in enumerate(tzip(timesteps[:-1], timesteps[1:])):
         t_vec = torch.full((img.shape[0],), t_curr, dtype=img.dtype, device=img.device)
         info['t'] = t_prev if inverse else t_curr
-        
         
         if inverse:
             img_name = str(info['t']) + '_' + 'img'
@@ -179,7 +177,7 @@ def denoise_kv(
             mask_indices = info['mask_indices']
             img_name = str(info['t']) + '_' + 'img'
             source_img = info_s['feature'][img_name].to(img.device)
-            #img = source_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + img * info['mask'][:, info['mask_indices'],...]
+            img = source_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + img * info['mask'][:, info['mask_indices'],...]
             
         pred = model(
             img=img,
