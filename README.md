@@ -45,3 +45,19 @@ python demo_lore.py --resize -1 \
                     --seeds 3 \
                     --savename 'floor'
 ```
+
+```
+python demo_lore.py --resize -1 \
+                    --source_prompt "a cat is lying on the floor" \
+                    --target_prompt "a dog is lying on the floor" \
+                    --target_object "dog" \
+                    --target_index 2 \
+                    --source_img_dir '../../cli_expkvedit/x1.jpg' \
+                    --source_mask_dir '../../cli_expkvedit/x4.jpg'  \
+                    --num_steps 10 \
+                    --inject 8 \
+                    --noise_scale 0 \
+                    --training_epochs 2 \
+                    --seeds 0 \
+                    --savename 'lying'
+```
