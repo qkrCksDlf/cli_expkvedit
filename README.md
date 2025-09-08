@@ -56,7 +56,7 @@ python demo_lore.py --resize -1 \
                     --source_mask_dir '../../cli_expkvedit/x4.jpg'  \
                     --num_steps 10 \
                     --inject 8 \
-                    --noise_scale 0 \
+                    --noise_scale 0.5 \
                     --training_epochs 2 \
                     --seeds 0 \
                     --savename 'lying'
