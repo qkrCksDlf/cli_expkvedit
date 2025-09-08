@@ -36,12 +36,12 @@ python cli_kv_edit.py \
 
 ```
 python demo_lore.py --resize -1 \
-                    --source_prompt "a cat is lying on the floor" \
-                    --target_prompt "a dog is lying on the floor" \
-                    --target_object "dog" \
+                    --source_prompt "cat is on the pink chair" \
+                    --target_prompt "cat is on the wooden chair" \
+                    --target_object "wooden chair" \
                     --target_index 5 \
-                    --source_img_dir '../../cli_expkvedit/x1.jpg' \
-                    --source_mask_dir '../../cli_expkvedit/ref_mask2.jpg'  \
+                    --source_img_dir '../../cli_expkvedit/Mailab/data/source/simg_05.jpg' \
+                    --source_mask_dir '../../cli_expkvedit/Mailab/data/s_masks/simg_05_mask.png'  \
                     --seeds 3 \
-                    --savename 'lying on the floor'
+                    --savename 'cat'
 ```
