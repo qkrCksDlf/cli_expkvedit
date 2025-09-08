@@ -54,9 +54,9 @@ python demo_lore.py --resize -1 \
                     --target_index 2 \
                     --source_img_dir '../../cli_expkvedit/x1.jpg' \
                     --source_mask_dir '../../cli_expkvedit/x4.jpg'  \
-                    --num_steps 15 \
+                    --num_steps 10 \
                     --inject 12 \
-                    --noise_scale 0.9 \
+                    --noise_scale 1 \
                     --training_epochs 1 \
                     --seeds 0 \
                     --savename 'lying'
