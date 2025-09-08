@@ -43,5 +43,5 @@ python demo_lore.py --resize -1 \
                     --source_img_dir '../../cli_expkvedit/003.jpg' \
                     --source_mask_dir '../../cli_expkvedit/ref_mask3.jpg'  \
                     --seeds 3 \
-                    --savename 'sitting on the floor'
+                    --savename ''
 ```
