@@ -37,7 +37,7 @@ python cli_kv_edit.py \
 ```
 python demo_lore.py --resize -1 \
                     --source_prompt "cat is on the pink chair" \
-                    --target_prompt "cat is on the wooden chair" \
+                    --target_prompt "cat is on the metal chair" \
                     --target_object "wooden chair" \
                     --target_index 5 \
                     --source_img_dir '../../cli_expkvedit/Mailab/data/source/simg_05.jpg' \
