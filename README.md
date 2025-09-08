@@ -41,7 +41,7 @@ python demo_lore.py --resize -1 \
                     --target_object "dog" \
                     --target_index 5 \
                     --source_img_dir '../../cli_expkvedit/003.jpg' \
-                    --source_mask_dir '../../cli_expkvedit/ref_mask3.jpg'  \
+                    --source_mask_dir '../../cli_expkvedit/ref_mask2.jpg'  \
                     --seeds 3 \
                     --savename ''
 ```
