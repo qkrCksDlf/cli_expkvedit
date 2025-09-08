@@ -33,3 +33,15 @@ python cli_kv_edit.py \
     --attn_mask \
     --re_init
 ```
+
+```
+python demo_lore.py --resize -1 \
+                    --source_prompt "a cat is lying on the floor" \
+                    --target_prompt "a dog is lying on the floor" \
+                    --target_object "dog" \
+                    --target_index 5 \
+                    --source_img_dir '../../cli_expkvedit/x1.jpg' \
+                    --source_mask_dir '../../cli_expkvedit/ref_mask2.jpg'  \
+                    --seeds 3 \
+                    --savename 'lying on the floor'
+```
