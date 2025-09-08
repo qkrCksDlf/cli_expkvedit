@@ -406,9 +406,9 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             #source_img_k[:, :, mask_indices, ...] = img_k
             #source_img_v[:, :, mask_indices, ...] = img_v
             
-            #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+            source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
             source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
-            source_img_k_s[:, :, mask_indices, ...] = img_k
+           
             
     
             
@@ -525,9 +525,9 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             mask_indices = info['mask_indices']
             #원래는 이렇게 했음
             #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-            #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
+            source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
             source_img_k_s[:, :, mask_indices, ...] = img_k
-            source_img_v_s[:, :, mask_indices, ...] = img_v
+            #source_img_v_s[:, :, mask_indices, ...] = img_v
             
             
             k = torch.cat((txt_k, source_img_k_s), dim=2)
