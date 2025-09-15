@@ -43,6 +43,7 @@ python demo_lore.py --resize -1 \
                     --source_img_dir '../../cli_expkvedit/x1.jpg' \
                     --source_mask_dir '../../cli_expkvedit/x4.jpg'  \
                     --seeds 3 \
+                    --training_steps 0 \
                     --savename 'floor'
 ```
 
