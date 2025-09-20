@@ -74,3 +74,12 @@ python demo_lore.py --resize -1 \
                     --seeds 0 \
                     --savename 'lying'
 ```
+
+
+```
+python cli_kv_edit.py \
+    --input_image "x1.jpg" \
+    --mask_image "x4.jpg" \
+    --source_prompt "a cat is lying on the floor" \
+    --target_prompt "a dog is lying on the floor"
+```
