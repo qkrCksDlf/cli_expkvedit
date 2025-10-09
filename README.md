@@ -45,7 +45,8 @@ python demo_lore.py --resize -1 \
                     --source_mask_dir '../../../cli_expkvedit/x4.jpg'  \
                     --seeds 3 \
                     --training_steps 0 \
-                    --savename 'floor'
+                    --savename 'floor' \
+                    --v_inject 2
 ```
 
 ```
