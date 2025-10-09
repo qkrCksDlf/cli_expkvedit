@@ -40,7 +40,7 @@ python demo_lore.py --resize -1 \
                     --target_prompt "a dog is lying on the floor" \
                     --target_object "dog" \
                     --target_index 5 \
-                    --ref_img_dir '../../../cli_expkvedit/x3.jpg'  \
+                    --ref_img_dir '../../../cli_expkvedit/x3.png'  \
                     --source_img_dir '../../../cli_expkvedit/x1.jpg' \
                     --source_mask_dir '../../../cli_expkvedit/x4.jpg'  \
                     --seeds 3 \
