@@ -403,11 +403,11 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             
             #원본
             mask_indices = info['mask_indices'] 
-            #source_img_k[:, :, mask_indices, ...] = img_k
-            #source_img_v[:, :, mask_indices, ...] = img_v
+            source_img_k_s[:, :, mask_indices, ...] = img_k
+            source_img_v_s[:, :, mask_indices, ...] = img_v
             
-            source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-            source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+            #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
            
             
     
