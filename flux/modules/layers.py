@@ -515,6 +515,10 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 attn = attention(q, k, v, pe=pe)
             
         else:
+
+            feature_keys = list(info['feature'].keys())
+            feature_k_index = feature_keys.index(feature_k_name)
+            
             
             source_img_k = info['feature'][feature_k_name].to(x.device) #레퍼런스
             source_img_v = info['feature'][feature_v_name].to(x.device) #레퍼런스
@@ -525,9 +529,19 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             mask_indices = info['mask_indices']
             #원래는 이렇게 했음
             #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-            source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
-            source_img_k_s[:, :, mask_indices, ...] = img_k
+            
+            #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
+            #source_img_k_s[:, :, mask_indices, ...] = img_k
+            
             #source_img_v_s[:, :, mask_indices, ...] = img_v
+
+            if feature_k_index > 3:
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            else:
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
+                
             
             
             k = torch.cat((txt_k, source_img_k_s), dim=2)
