@@ -390,77 +390,42 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             img_q_r, img_k_r, img_v_r = rearrange(img_qkv_r, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)          
             img_q_r, img_k_r = self.img_attn.norm(img_q_r, img_k_r, img_v_r)
             
-            
 
-
-
-            
             source_img_k = info['feature'][feature_k_name].to(img.device) #레퍼런스
             source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
             source_img_k_s = info_s['feature'][feature_k_name].to(img.device) #소스
             source_img_v_s = info_s['feature'][feature_v_name].to(img.device) #소스
-        
-            
             #원본
-            mask_indices = info['mask_indices'] 
 
-            if len(info['feature'])
-            source_img_k_s[:, :, mask_indices, ...] = img_k
-            source_img_v_s[:, :, mask_indices, ...] = img_v
+            key_list_s = list(info_s['feature'].keys())
             
-            #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-            #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            key_index = -1 # 기본값 (못 찾음)
+            try:
+                # 2. 현재 키 이름(feature_k_name)의 인덱스를 찾습니다.
+                key_index = key_list_s.index(feature_k_name)
+            except ValueError:
+                # 딕셔너리에 해당 키가 없으면, 인덱스를 찾을 수 없습니다.
+                pass
+                
+            if key_index <= 4:
+                # [조건 만족] K,V 주입
+                print(f"Index {key_index} >= 4. Injecting K/V for {feature_k_name}") # (디버깅용)
+                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+                source_img_k_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            
+            else:
+                # [조건 불만족] K,V 주입 대신 Self-Attention 수행
+                print(f"Index {key_index} < 4. Using Self-Attention for {feature_k_name}") # (디버깅용)
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
+
            
-            
-    
-            
-            
-            
-            
-            
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
             k = torch.cat((txt_k, source_img_k_s), dim=2) 
             v = torch.cat((txt_v, source_img_v_s), dim=2)
 
-
-
             #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
-            
-            '''
-            =================================================================================================================================
-            text and image attention 관련 
-            '''
-            #layer_name = f"{info['id']}_{info['t']}_DoubleStreamBlock_kv"
-            #timestep = 0  # 혹시 모를 다중 저장 대비
-            
-            # 1. attention weights 저장
-            #attn_maps[timestep] = attn_maps.get(timestep, dict())
-            #attn_maps[timestep][layer_name] = attn_weights.detach().cpu()
-            # save_attention_maps(
-            #     attn_maps,
-            #     tokenizer=info['tokenizer'],         # info에 tokenizer 추가되어야 함
-            #     prompts="a dog is lying on the floor",           # info에 caption도 있어야 함
-            #     base_dir='attn_overlay',
-            #     token_filter='dog',
-            #     hw=(48, 32)
-            # )
-            '''
-            =================================================================================================================================
-            '''
-
-            
-#             overlay_attention_map(
-#                 str(info['id']),
-#                 str(info['t']),
-#                 attn_weights=attn_weights,
-#                 q_idx=txt.shape[1] + info['mask_indices'][0],  # 강아지 위치
-#                 h_idx=0,
-#                 img_size=(48,32),
-#                 base_image_path="011.png",
-#                 save_path="attn_overlay/vis1.png"
-# )
-            
 
         
         txt_attn, img_attn = attn[:, : txt.shape[1]], attn[:, txt.shape[1] :]
