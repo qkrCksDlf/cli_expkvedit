@@ -419,13 +419,10 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             #     source_img_k_s[:, :, mask_indices, ...] = img_k
             #     source_img_v_s[:, :, mask_indices, ...] = img_v
 
-            if info['t'] > 0.6:
-                source_img_k_s[:, :, mask_indices, ...] = img_k
-                source_img_v_s[:, :, mask_indices, ...] = img_v
-            else:
-                #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-                source_img_k_s[:, :, mask_indices, ...] = img_k
-                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+
+            source_img_k_s[:, :, mask_indices, ...] = img_k
+            source_img_v_s[:, :, mask_indices, ...] = img_v
+
                 
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
             k = torch.cat((txt_k, source_img_k_s), dim=2) 
@@ -511,7 +508,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
 
             print(info['t'])
             
-            if info['t'] > 1.7:
+            if info['t'] < 0.5:
                 print("실행!")
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
