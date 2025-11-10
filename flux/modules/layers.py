@@ -396,7 +396,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             source_img_k_s = info_s['feature'][feature_k_name].to(img.device) #소스
             source_img_v_s = info_s['feature'][feature_v_name].to(img.device) #소스
             #원본
-
+            mask_indices = info['mask_indices'] 
             key_list_s = list(info_s['feature'].keys())
             
             key_index = -1 # 기본값 (못 찾음)
