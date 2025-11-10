@@ -424,7 +424,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 source_img_v_s[:, :, mask_indices, ...] = img_v
             else:
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-                source_img_k_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
                 
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
             k = torch.cat((txt_k, source_img_k_s), dim=2) 
