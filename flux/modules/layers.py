@@ -397,29 +397,35 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             source_img_v_s = info_s['feature'][feature_v_name].to(img.device) #소스
             #원본
             mask_indices = info['mask_indices'] 
-            key_list_s = list(info_s['feature'].keys())
+            # key_list_s = list(info_s['feature'].keys())
             
-            key_index = -1 # 기본값 (못 찾음)
-            try:
-                # 2. 현재 키 이름(feature_k_name)의 인덱스를 찾습니다.
-                key_index = key_list_s.index(feature_k_name)
-            except ValueError:
-                # 딕셔너리에 해당 키가 없으면, 인덱스를 찾을 수 없습니다.
-                pass
+            # key_index = -1 # 기본값 (못 찾음)
+            # try:
+            #     # 2. 현재 키 이름(feature_k_name)의 인덱스를 찾습니다.
+            #     key_index = key_list_s.index(feature_k_name)
+            # except ValueError:
+            #     # 딕셔너리에 해당 키가 없으면, 인덱스를 찾을 수 없습니다.
+            #     pass
                 
-            if key_index <= 4 and info['t']>0.4:
-                # [조건 만족] K,V 주입
-                print(f"Index {key_index} >= 4. Injecting K/V for {feature_k_name}") # (디버깅용)
-                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-                source_img_k_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            # if key_index <= 4 and info['t']>0.4:
+            #     # [조건 만족] K,V 주입
+            #     print(f"Index {key_index} >= 4. Injecting K/V for {feature_k_name}") # (디버깅용)
+            #     source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+            #     source_img_k_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
             
-            else:
-                # [조건 불만족] K,V 주입 대신 Self-Attention 수행
-                print(f"Index {key_index} < 4. Using Self-Attention for {feature_k_name}") # (디버깅용)
+            # else:
+            #     # [조건 불만족] K,V 주입 대신 Self-Attention 수행
+            #     print(f"Index {key_index} < 4. Using Self-Attention for {feature_k_name}") # (디버깅용)
+            #     source_img_k_s[:, :, mask_indices, ...] = img_k
+            #     source_img_v_s[:, :, mask_indices, ...] = img_v
+
+            if info['t'] < 0.38:
                 source_img_k_s[:, :, mask_indices, ...] = img_k
                 source_img_v_s[:, :, mask_indices, ...] = img_v
-
-           
+            else:
+                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+                source_img_k_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+                
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
             k = torch.cat((txt_k, source_img_k_s), dim=2) 
             v = torch.cat((txt_v, source_img_v_s), dim=2)
