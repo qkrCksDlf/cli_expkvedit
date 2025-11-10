@@ -537,7 +537,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
 
             print(info['t'])
             
-            if info['t'] > 9:
+            if info['t'] < 0.45:
                 print("실행!")
                 input()
                 source_img_k_s[:, :, mask_indices, ...] = img_k
