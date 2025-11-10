@@ -407,7 +407,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 # 딕셔너리에 해당 키가 없으면, 인덱스를 찾을 수 없습니다.
                 pass
                 
-            if key_index <= 4:
+            if key_index <= 4 and info['t']>0.4:
                 # [조건 만족] K,V 주입
                 print(f"Index {key_index} >= 4. Injecting K/V for {feature_k_name}") # (디버깅용)
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
