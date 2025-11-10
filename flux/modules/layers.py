@@ -419,7 +419,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             #     source_img_k_s[:, :, mask_indices, ...] = img_k
             #     source_img_v_s[:, :, mask_indices, ...] = img_v
 
-            if info['t'] > 0.5:
+            if info['t'] > 0.6:
                 source_img_k_s[:, :, mask_indices, ...] = img_k
                 source_img_v_s[:, :, mask_indices, ...] = img_v
             else:
