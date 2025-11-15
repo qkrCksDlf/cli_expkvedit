@@ -10,11 +10,6 @@ from .modules.conditioner import HFEmbedder
 from tqdm import tqdm
 from tqdm.contrib import tzip
 
-from attention_map_diffusers import (
-    attn_maps,
-    init_pipeline,
-    save_attention_maps
-)
 
 def get_noise(
     num_samples: int,
