@@ -10,6 +10,12 @@ from .modules.conditioner import HFEmbedder
 from tqdm import tqdm
 from tqdm.contrib import tzip
 
+from attention_map_diffusers import (
+    attn_maps,
+    init_pipeline,
+    save_attention_maps
+)
+
 def get_noise(
     num_samples: int,
     height: int,
@@ -180,6 +186,7 @@ def denoise_kv(
             img_name = str(info['t']) + '_' + 'img'
             source_img = info_s['feature'][img_name].to(img.device)
             #img = source_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + img * info['mask'][:, info['mask_indices'],...]
+            model = init_pipeline(model)
             
         pred = model(
             img=img,
@@ -195,6 +202,9 @@ def denoise_kv(
             inp_target_s=inp_target_s
         )
         img = img + (t_prev - t_curr) * pred
+
+        if !inverse:
+            save_attention_maps(attn_maps, pipe.tokenizer, prompts, base_dir='attn_maps-flux-dev', unconditional=False)
     return img, info
 
 def denoise_kv_inf(
