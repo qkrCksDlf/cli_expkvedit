@@ -429,7 +429,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             v = torch.cat((txt_v, source_img_v_s), dim=2)
 
             #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
-            attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
+            attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
 
         
         txt_attn, img_attn = attn[:, : txt.shape[1]], attn[:, txt.shape[1] :]
