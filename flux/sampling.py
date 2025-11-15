@@ -186,7 +186,6 @@ def denoise_kv(
             img_name = str(info['t']) + '_' + 'img'
             source_img = info_s['feature'][img_name].to(img.device)
             #img = source_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + img * info['mask'][:, info['mask_indices'],...]
-            model = init_pipeline(model)
             
         pred = model(
             img=img,
@@ -203,8 +202,6 @@ def denoise_kv(
         )
         img = img + (t_prev - t_curr) * pred
 
-        if not inverse:
-            save_attention_maps(attn_maps, pipe.tokenizer, prompts, base_dir='attn_maps-flux-dev', unconditional=False)
     return img, info
 
 def denoise_kv_inf(
