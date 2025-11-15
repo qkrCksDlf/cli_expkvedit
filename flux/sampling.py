@@ -10,7 +10,7 @@ from .modules.conditioner import HFEmbedder
 from tqdm import tqdm
 from tqdm.contrib import tzip
 
-from wow.attention_map_diffusers import (
+from attention_map_diffusers import (
     attn_maps,
     init_pipeline,
     save_attention_maps
@@ -203,7 +203,7 @@ def denoise_kv(
         )
         img = img + (t_prev - t_curr) * pred
 
-        if !inverse:
+        if not inverse:
             save_attention_maps(attn_maps, pipe.tokenizer, prompts, base_dir='attn_maps-flux-dev', unconditional=False)
     return img, info
 
