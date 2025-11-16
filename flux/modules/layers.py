@@ -90,10 +90,13 @@ def save_cross_attention_map(
     txt_len: int,
     img_len: int,
     layer_tag: str,
-    inp_target_s=None,  # 시그니처는 유지만 하고 실제로 쓰진 않음
+    inp_target_s=None,  # 시그니처는 그대로 두고, 실제로는 사용 안 함
 ):
     """
-    attn_weights: [B, H, Q, K] (Q = txt_len + img_len, K = txt_len + img_len)
+    attn_weights: [B, H, Q, K]  (Q = txt_len + img_len, K = txt_len + img_len)
+      - Q: query 길이 (텍스트 + 이미지)
+      - K: key 길이   (텍스트 + 이미지)
+
     txt_len: 텍스트 토큰 개수
     img_len: 이미지 토큰 개수
     layer_tag: "MB" / "SB" 등 레이어 구분용 문자열
@@ -103,71 +106,85 @@ def save_cross_attention_map(
         - 선택: img_size=(H,W), save_attn(bool)
     """
 
-    # 저장 안 하도록 설정되어 있으면 바로 반환
+    # 이 플래그 안 켜져 있으면 그냥 저장 안 함
     if not info.get("save_attn", False):
         return
 
     B, H, Q, K = attn_weights.shape
 
-    # 안전하게 한 번 더 잘라줌 (파라미터랑 실제 길이 안 맞을 경우 대비)
+    # 안전하게 길이 보정
     txt_len = min(txt_len, Q)
-    img_len = min(img_len, K - txt_len)
+    max_img_len = K - txt_len
+    if max_img_len <= 0:
+        return
+    img_len = min(img_len, max_img_len)
 
     # [B, H, txt_len, img_len] : 텍스트 query → 이미지 key attention만 추출
-    attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len + img_len]
+    #   Q 쪽: 앞 txt_len개 (텍스트)
+    #   K 쪽: 뒤 img_len개 (이미지)
+    attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len + img_len]  # [B, H, txt_len, img_len]
 
-    # B=0만 사용한다고 가정 (기본적으로 배치 1일 거라서)
-    # 그리고 head들은 평균내서 깔끔한 map으로 만들자
-    # [H, txt_len, img_len] -> [txt_len, img_len]
-    attn_mean = attn_text_to_img[0].mean(dim=0)  # head 평균
+    # 배치 0만 사용 (대부분 B=1일 것)
+    # head들 평균 -> [txt_len, img_len]
+    attn_mean = attn_text_to_img[0].mean(dim=0)  # [txt_len, img_len]
 
     # img_size 결정
     import math as _math
     img_h, img_w = info.get("img_size", (0, 0))
     if img_h * img_w != img_len:
-        # 정사각형 가능하면 정사각형으로
+        # 정사각형 가능하면 정사각형 시도
         side = int(_math.sqrt(img_len))
         if side * side == img_len:
             img_h, img_w = side, side
         else:
-            # 어쩔 수 없이 1 x img_len (직선)로 본다.
+            # 어쩔 수 없이 1 x img_len (직선)로라도 본다
             img_h, img_w = 1, img_len
 
+    from PIL import Image
     import numpy as _np
-    import matplotlib.pyplot as _plt
     import os as _os
 
     attn_id = info.get("id", "unknown")
     attn_t = info.get("t", 0)
 
-    # 저장 폴더
     out_dir = "attn_token_maps"
     _os.makedirs(out_dir, exist_ok=True)
 
-    # 토큰별로 한 장씩 저장
-    # (원하면 여기서 range(txt_len) 대신 몇 개만 자르는 것도 가능)
+    # === 토큰별로 한 장씩 저장 ===
     for tok_idx in range(txt_len):
+        # [img_len]
         vec = attn_mean[tok_idx]  # [img_len]
         vec = vec.detach().cpu().float().numpy()
 
-        # 정규화
-        vec = (vec - vec.min()) / (vec.max() - vec.min() + 1e-8)
+        # 정규화 (0~1)
+        vmin, vmax = vec.min(), vec.max()
+        if vmax > vmin:
+            vec = (vec - vmin) / (vmax - vmin)
+        else:
+            vec = _np.zeros_like(vec)
 
-        # 2D로 reshape
-        heatmap = vec.reshape(img_h, img_w)
+        # [img_h, img_w]로 reshape
+        heatmap = vec.reshape(img_h, img_w)  # 여기서 shape 정확히 맞춰줌
 
-        _plt.figure(figsize=(3, 3))
-        _plt.imshow(heatmap, cmap="jet")
-        _plt.axis("off")
+        # 0~255 uint8로 변환 (그레이스케일)
+        img_arr = (heatmap * 255.0).clip(0, 255).astype("uint8")
+
+        # 그레이스케일 -> L 모드 이미지
+        pil_img = Image.fromarray(img_arr, mode="L")
+
+        # 보기 좋게 키우고 싶으면 (x4 업스케일)
+        scale = 4
+        pil_img = pil_img.resize((img_w * scale, img_h * scale), resample=Image.NEAREST)
+        pil_img = pil_img.convert("RGB")  # RGB로 저장
 
         save_path = _os.path.join(
             out_dir,
             f"{attn_id}_{layer_tag}_t{attn_t}_tok{tok_idx}.png",
         )
-        _plt.savefig(save_path, bbox_inches="tight", pad_inches=0)
-        _plt.close()
+        pil_img.save(save_path)
 
-    print(f"✅ Saved token-wise attention maps: {out_dir}/{attn_id}_{layer_tag}_t{attn_t}_tok*.png")
+    print(f"✅ Saved token-wise attention maps to {out_dir} for id={attn_id}, layer={layer_tag}, t={attn_t}")
+
 
 
 
