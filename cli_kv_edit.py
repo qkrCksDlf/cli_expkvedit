@@ -444,7 +444,7 @@ class FluxEditor_CLI:
             info["q_token"] = "▁dog"
             z0_r, zt_r, info_r = self.inverse(encoded_image2, union_mask if opts.attn_mask else None, opts, False)
             info_r["save_attn"] = True
-            info["q_token"] = "▁dog"
+            info_r["q_token"] = "▁dog"
 
             
             # Perform editing -> mask는 소스/레퍼런스/union 선택.
