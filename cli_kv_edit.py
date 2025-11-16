@@ -260,9 +260,11 @@ class FluxEditor_CLI:
         with torch.no_grad():
             if sot:
                 inp = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
+                inp.pop("token_list", None)
                 z0, zt, info = self.model.inverse(inp, mask, opts)
             else:                
                 inp = prepare(self.t5, self.clip, init_image, prompt=opts.target_prompt) #이 부분 수정2
+                inp.pop("token_list", None)
                 z0, zt, info = self.model.inverse(inp, mask, opts)
                 
             
@@ -308,6 +310,9 @@ class FluxEditor_CLI:
             inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
             info['token_list'] = inp_target['token_list']
             info_r['token_list'] = inp_target['token_list']
+            inp_target.pop("token_list", None)
+            inp_target2.pop("token_list", None)
+            inp_target_s.pop("token_list", None)
 
             # 1. 진짜 CLIP tokenizer 직접 불러오기
             # tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
