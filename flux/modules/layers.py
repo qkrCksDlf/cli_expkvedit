@@ -583,18 +583,24 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
 
             #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
+            
+            attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len+img_len]
 
+            if info.get("track_cross", False):
+                info["tracker"].add(attn_text_to_img)
+
+        
             # === 여기서 cross-attention map 저장 ===
-            txt_len = txt.shape[1]
-            img_len = img.shape[1]
-            save_cross_attention_map(
-                attn_weights=attn_weights,
-                info=info,
-                txt_len=txt_len,
-                img_len=img_len,
-                layer_tag="MB",
-                inp_target_s=inp_target_s,
-            )
+            # txt_len = txt.shape[1]
+            # img_len = img.shape[1]
+            # save_cross_attention_map(
+            #     attn_weights=attn_weights,
+            #     info=info,
+            #     txt_len=txt_len,
+            #     img_len=img_len,
+            #     layer_tag="MB",
+            #     inp_target_s=inp_target_s,
+            # )
 
         
         txt_attn, img_attn = attn[:, : txt.shape[1]], attn[:, txt.shape[1] :]
@@ -686,17 +692,22 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             k = torch.cat((txt_k, source_img_k_s), dim=2)
             v = torch.cat((txt_v, source_img_v_s), dim=2)
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
+
+            attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len+img_len]
+            if info.get("track_cross", False):
+                info["tracker"].add(attn_text_to_img)
+                
             # === 여기서 cross-attention map 저장 ===
-            txt_len = 512
-            img_len = source_img_k_s.shape[2]
-            save_cross_attention_map(
-                attn_weights=attn_weights,
-                info=info,
-                txt_len=txt_len,
-                img_len=img_len,
-                layer_tag="SB",
-                inp_target_s=inp_target_s,
-            )
+            # txt_len = 512
+            # img_len = source_img_k_s.shape[2]
+            # save_cross_attention_map(
+            #     attn_weights=attn_weights,
+            #     info=info,
+            #     txt_len=txt_len,
+            #     img_len=img_len,
+            #     layer_tag="SB",
+            #     inp_target_s=inp_target_s,
+            # )
         # compute activation in mlp stream, cat again and run second linear layer
         output = self.linear2(torch.cat((attn, self.mlp_act(mlp)), 2))
         return x + mod.gate * output
