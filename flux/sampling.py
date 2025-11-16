@@ -242,6 +242,9 @@ def denoise_kv(
         )
         img = img + (t_prev - t_curr) * pred
 
+        if info.get("track_cross", False):
+            info["tracker"].save_mask(info["t"])
+
     return img, info
 
 def denoise_kv_inf(
