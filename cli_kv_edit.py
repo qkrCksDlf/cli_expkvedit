@@ -308,10 +308,40 @@ class FluxEditor_CLI:
             inp_target = prepare(self.t5, self.clip, init_image, prompt=opts.target_prompt)
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
             inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
-            info['token_list'] = inp_target['token_list']
-            print(inp_target['token_list'])
-            input()
-            info_r['token_list'] = inp_target['token_list']
+            # info['token_list'] = inp_target['token_list']
+            # print(inp_target['token_list'])
+            # input()
+            # info_r['token_list'] = inp_target['token_list']
+            # inp_target.pop("token_list", None)
+            # inp_target2.pop("token_list", None)
+            # inp_target_s.pop("token_list", None)
+
+            # token_list 저장
+            token_list = inp_target["token_list"]
+            info["token_list"]   = token_list
+            info_r["token_list"] = token_list
+    
+            # 🐶 dog 토큰 인덱스 찾기
+            dog_token = "▁dog"
+            try:
+                dog_idx = token_list.index(dog_token)
+            except ValueError:
+                print(f"[Tracker] '{dog_token}' not found in token_list, tracker 비활성화")
+                dog_idx = None
+    
+            # tracker 만들기 (찾았을 때만)
+            if dog_idx is not None:
+                tracker = CrossAttentionTracker(
+                    token_idx=dog_idx,
+                    out_root="attn_token_masks",
+                    attn_id=info.get("id", "0"),
+                )
+                info["tracker"]      = tracker
+                info["track_cross"]  = True
+                info_r["tracker"]    = tracker  # 필요하면 ref 쪽도 공유
+                info_r["track_cross"]= True
+    
+            # 이제 denoise에 넘기기 전에 token_list는 지워줌 (모델 인자에 없으니까)
             inp_target.pop("token_list", None)
             inp_target2.pop("token_list", None)
             inp_target_s.pop("token_list", None)
