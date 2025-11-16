@@ -309,6 +309,8 @@ class FluxEditor_CLI:
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
             inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
             info['token_list'] = inp_target['token_list']
+            print(inp_target['token_list'])
+            input()
             info_r['token_list'] = inp_target['token_list']
             inp_target.pop("token_list", None)
             inp_target2.pop("token_list", None)
