@@ -99,12 +99,14 @@ def save_cross_attention_map(
     layer_tag: "MB" / "SB" 등 레이어 구분용 문자열
 
     info:
-        - 필수: id, t
+        - 필수:
+            - id: 샘플 식별자
+            - t: timestep (float 또는 tensor)
         - 선택:
             - img_size = (H, W)
             - save_attn (bool)
             - token_list = ["▁", "a", "▁dog", ...]
-            - q_token = "▁dog"  # 문자열 토큰
+            - q_token = "▁dog"  # 문자열 토큰 (토크나이저에서 나온 그대로)
     """
 
     # 0. 저장 플래그 없으면 바로 리턴
@@ -137,25 +139,30 @@ def save_cross_attention_map(
         print("⚠️ [save_cross_attention_map] token_list 또는 q_token 없음. 저장 스킵.")
         return
 
-    # 정확히 같은 토큰만 매칭
+    # 문자열 완전 일치만 허용 (정규화 없이)
     token_indices = [i for i, tok in enumerate(token_list) if tok == q_token]
 
     if not token_indices:
         print(f"⚠️ [save_cross_attention_map] q_token={q_token} not found in token_list. 저장 스킵.")
         return
 
+    token_indices = sorted(set(token_indices))
     print(f"✅ [save_cross_attention_map] q_token={q_token} -> indices={token_indices}")
 
     # ============================================
     # 4) img_len에서 자동으로 (img_h, img_w) 찾기
+    #    - info['img_size']가 정확하면 그거 우선 사용
+    #    - 아니면 img_len의 약수 중 sqrt에 가장 가까운 조합 사용
     # ============================================
     import math as _math
 
     img_h, img_w = info.get("img_size", (0, 0))
     if img_h * img_w != img_len:
+        # 자동 factorization
         h = int(_math.sqrt(img_len))
         if h < 1:
             h = 1
+        # sqrt에서 내려가면서 약수 찾기
         while h > 1 and img_len % h != 0:
             h -= 1
         w = img_len // h
@@ -164,11 +171,27 @@ def save_cross_attention_map(
     from PIL import Image
     import numpy as _np
     import os as _os
+    import torch as _torch
 
     attn_id = info.get("id", "unknown")
     attn_t = info.get("t", 0)
 
-    out_dir = "attn_token_maps"
+    # t를 float로 정리
+    if isinstance(attn_t, _torch.Tensor):
+        attn_t_val = float(attn_t.detach().cpu().item())
+    else:
+        attn_t_val = float(attn_t)
+
+    # t 문자열: 소수 3자리까지만, 폴더 이름용 '.' → '_'
+    attn_t_str = f"{attn_t_val:.3f}".replace(".", "_")
+
+    # 저장 경로: attn_token_maps/{id}/{layer_tag}/t_{t값}/
+    out_dir = _os.path.join(
+        "attn_token_maps",
+        str(attn_id),
+        str(layer_tag),
+        f"t_{attn_t_str}",
+    )
     _os.makedirs(out_dir, exist_ok=True)
 
     # ============================================
@@ -188,25 +211,29 @@ def save_cross_attention_map(
         else:
             vec = _np.zeros_like(vec)
 
+        # [img_h, img_w] 로 reshape
         heatmap = vec.reshape(img_h, img_w)
 
+        # 0~255 uint8 그레이스케일
         img_arr = (heatmap * 255.0).clip(0, 255).astype("uint8")
         pil_img = Image.fromarray(img_arr, mode="L")
 
+        # 보기 좋게 x4 업스케일
         scale = 4
         pil_img = pil_img.resize((img_w * scale, img_h * scale), resample=Image.NEAREST)
         pil_img = pil_img.convert("RGB")
 
         save_path = _os.path.join(
             out_dir,
-            f"{attn_id}_{layer_tag}_t{attn_t}_tok{tok_idx}.png",
+            f"{attn_id}_{layer_tag}_t{attn_t_val:.4f}_tok{tok_idx}.png",
         )
         pil_img.save(save_path)
 
     print(
         f"✅ [save_cross_attention_map] saved {len(token_indices)} token maps "
-        f"({img_h}x{img_w}) to {out_dir} for id={attn_id}, layer={layer_tag}, t={attn_t}"
+        f"({img_h}x{img_w}) to {out_dir} for id={attn_id}, layer={layer_tag}, t={attn_t_val:.4f}"
     )
+
 
 
 
