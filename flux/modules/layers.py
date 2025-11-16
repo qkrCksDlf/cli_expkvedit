@@ -101,71 +101,61 @@ def save_cross_attention_map(
     info:
         - 필수: id, t
         - 선택:
-            - img_size = (H, W)  # 있으면 우선 사용 (맞으면)
+            - img_size = (H, W)
             - save_attn (bool)
-            - token_list = ["▁a", "▁photo", "▁of", "▁a", "▁dog", ...]
-            - q_token = "dog" 또는 ["dog", "cat"]  # 문자열 토큰으로 지정
+            - token_list = ["▁", "a", "▁dog", ...]
+            - q_token = "▁dog"  # 문자열 토큰
     """
 
-    # 저장 플래그 없으면 바로 리턴
+    # 0. 저장 플래그 없으면 바로 리턴
     if not info.get("save_attn", False):
         return
 
     B, H, Q, K = attn_weights.shape
 
-    # 안전하게 길이 보정
+    # 1. 길이 보정
     txt_len = min(txt_len, Q)
     max_img_len = K - txt_len
     if max_img_len <= 0:
         return
     img_len = min(img_len, max_img_len)
 
-    # [B, H, txt_len, img_len] : 텍스트 query → 이미지 key attention만 추출
+    # 2. text→image cross-attn만 추출: [B, H, txt_len, img_len]
     attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len + img_len]
 
-    # 배치 0, head 평균 → [txt_len, img_len]
+    # batch 0, head 평균 → [txt_len, img_len]
     attn_mean = attn_text_to_img[0].mean(dim=0)  # [txt_len, img_len]
 
     # ============================================
-    # 1) 어떤 토큰들에 대해 저장할지 결정 (q_token 지원)
+    # 3) q_token / token_list 기반으로 토큰 인덱스 결정
+    #    → 못 찾으면 "아무것도 저장 안 함"
     # ============================================
-    token_indices = list(range(txt_len))  # 기본: 전체 토큰
-
     token_list = info.get("token_list", None)
     q_token = info.get("q_token", None)
 
-    if q_token is not None and token_list is not None:
-        if isinstance(q_token, str):
-            target_tokens = [q_token]
-        else:
-            target_tokens = list(q_token)
+    if token_list is None or q_token is None:
+        print("⚠️ [save_cross_attention_map] token_list 또는 q_token 없음. 저장 스킵.")
+        return
 
-        selected = []
-        for target in target_tokens:
-            for i, tok in enumerate(token_list):
-                if tok == target:
-                    selected.append(i)
+    # 정확히 같은 토큰만 매칭
+    token_indices = [i for i, tok in enumerate(token_list) if tok == q_token]
 
-        if selected:
-            token_indices = sorted(set(selected))
-            print(f"✅ [save_cross_attention_map] q_token={q_token} -> indices {token_indices}")
-        else:
-            print(f"⚠️ [save_cross_attention_map] q_token={q_token} not found. Save all tokens instead.")
+    if not token_indices:
+        print(f"⚠️ [save_cross_attention_map] q_token={q_token} not found in token_list. 저장 스킵.")
+        return
+
+    print(f"✅ [save_cross_attention_map] q_token={q_token} -> indices={token_indices}")
 
     # ============================================
-    # 2) img_len에서 자동으로 (img_h, img_w) 찾기
-    #    - info['img_size']가 정확하면 그거 우선 사용
-    #    - 아니면 img_len의 약수 중 sqrt에 가장 가까운 조합 사용
+    # 4) img_len에서 자동으로 (img_h, img_w) 찾기
     # ============================================
     import math as _math
 
     img_h, img_w = info.get("img_size", (0, 0))
     if img_h * img_w != img_len:
-        # 자동 factorization
         h = int(_math.sqrt(img_len))
         if h < 1:
             h = 1
-        # sqrt에서 내려가면서 약수 찾기
         while h > 1 and img_len % h != 0:
             h -= 1
         w = img_len // h
@@ -182,30 +172,27 @@ def save_cross_attention_map(
     _os.makedirs(out_dir, exist_ok=True)
 
     # ============================================
-    # 3) 선택된 토큰들에 대해 한 장씩 heatmap 저장
+    # 5) 선택된 토큰들만 저장
     # ============================================
     for tok_idx in token_indices:
         if tok_idx >= txt_len:
             continue
 
-        vec = attn_mean[tok_idx]          # [img_len]
+        vec = attn_mean[tok_idx]  # [img_len]
         vec = vec.detach().cpu().float().numpy()
 
-        # 정규화 (0 ~ 1)
+        # 0~1 정규화
         vmin, vmax = vec.min(), vec.max()
         if vmax > vmin:
             vec = (vec - vmin) / (vmax - vmin)
         else:
             vec = _np.zeros_like(vec)
 
-        # [img_h, img_w] 로 reshape
         heatmap = vec.reshape(img_h, img_w)
 
-        # 0~255 uint8 그레이스케일
         img_arr = (heatmap * 255.0).clip(0, 255).astype("uint8")
         pil_img = Image.fromarray(img_arr, mode="L")
 
-        # 보기 좋게 x4 업스케일
         scale = 4
         pil_img = pil_img.resize((img_w * scale, img_h * scale), resample=Image.NEAREST)
         pil_img = pil_img.convert("RGB")
@@ -217,9 +204,10 @@ def save_cross_attention_map(
         pil_img.save(save_path)
 
     print(
-        f"✅ [save_cross_attention_map] Saved {len(token_indices)} token maps "
+        f"✅ [save_cross_attention_map] saved {len(token_indices)} token maps "
         f"({img_h}x{img_w}) to {out_dir} for id={attn_id}, layer={layer_tag}, t={attn_t}"
     )
+
 
 
 
