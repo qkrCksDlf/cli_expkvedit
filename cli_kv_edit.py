@@ -51,6 +51,8 @@ import numpy as np
 from flux.sampling import prepare
 from flux.util import (configs, load_ae, load_clip, load_t5)
 from models.kv_edit import Flux_kv_edit
+from flux.modules.cross_tracker import CrossAttentionTracker
+
 
 
 @dataclass
