@@ -90,23 +90,24 @@ def save_cross_attention_map(
     txt_len: int,
     img_len: int,
     layer_tag: str,
-    inp_target_s=None,  # 시그니처는 그대로 두고, 실제로는 사용 안 함
+    inp_target_s=None,  # 시그니처만 유지, 실제로는 안 씀
 ):
     """
     attn_weights: [B, H, Q, K]  (Q = txt_len + img_len, K = txt_len + img_len)
-      - Q: query 길이 (텍스트 + 이미지)
-      - K: key 길이   (텍스트 + 이미지)
-
     txt_len: 텍스트 토큰 개수
     img_len: 이미지 토큰 개수
     layer_tag: "MB" / "SB" 등 레이어 구분용 문자열
 
     info:
         - 필수: id, t
-        - 선택: img_size=(H,W), save_attn(bool)
+        - 선택:
+            - img_size = (H, W)  # 있으면 우선 사용 (맞으면)
+            - save_attn (bool)
+            - token_list = ["▁a", "▁photo", "▁of", "▁a", "▁dog", ...]
+            - q_token = "dog" 또는 ["dog", "cat"]  # 문자열 토큰으로 지정
     """
 
-    # 이 플래그 안 켜져 있으면 그냥 저장 안 함
+    # 저장 플래그 없으면 바로 리턴
     if not info.get("save_attn", False):
         return
 
@@ -120,25 +121,55 @@ def save_cross_attention_map(
     img_len = min(img_len, max_img_len)
 
     # [B, H, txt_len, img_len] : 텍스트 query → 이미지 key attention만 추출
-    #   Q 쪽: 앞 txt_len개 (텍스트)
-    #   K 쪽: 뒤 img_len개 (이미지)
-    attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len + img_len]  # [B, H, txt_len, img_len]
+    attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len + img_len]
 
-    # 배치 0만 사용 (대부분 B=1일 것)
-    # head들 평균 -> [txt_len, img_len]
+    # 배치 0, head 평균 → [txt_len, img_len]
     attn_mean = attn_text_to_img[0].mean(dim=0)  # [txt_len, img_len]
 
-    # img_size 결정
+    # ============================================
+    # 1) 어떤 토큰들에 대해 저장할지 결정 (q_token 지원)
+    # ============================================
+    token_indices = list(range(txt_len))  # 기본: 전체 토큰
+
+    token_list = info.get("token_list", None)
+    q_token = info.get("q_token", None)
+
+    if q_token is not None and token_list is not None:
+        if isinstance(q_token, str):
+            target_tokens = [q_token]
+        else:
+            target_tokens = list(q_token)
+
+        selected = []
+        for target in target_tokens:
+            for i, tok in enumerate(token_list):
+                if tok == target:
+                    selected.append(i)
+
+        if selected:
+            token_indices = sorted(set(selected))
+            print(f"✅ [save_cross_attention_map] q_token={q_token} -> indices {token_indices}")
+        else:
+            print(f"⚠️ [save_cross_attention_map] q_token={q_token} not found. Save all tokens instead.")
+
+    # ============================================
+    # 2) img_len에서 자동으로 (img_h, img_w) 찾기
+    #    - info['img_size']가 정확하면 그거 우선 사용
+    #    - 아니면 img_len의 약수 중 sqrt에 가장 가까운 조합 사용
+    # ============================================
     import math as _math
+
     img_h, img_w = info.get("img_size", (0, 0))
     if img_h * img_w != img_len:
-        # 정사각형 가능하면 정사각형 시도
-        side = int(_math.sqrt(img_len))
-        if side * side == img_len:
-            img_h, img_w = side, side
-        else:
-            # 어쩔 수 없이 1 x img_len (직선)로라도 본다
-            img_h, img_w = 1, img_len
+        # 자동 factorization
+        h = int(_math.sqrt(img_len))
+        if h < 1:
+            h = 1
+        # sqrt에서 내려가면서 약수 찾기
+        while h > 1 and img_len % h != 0:
+            h -= 1
+        w = img_len // h
+        img_h, img_w = h, w
 
     from PIL import Image
     import numpy as _np
@@ -150,32 +181,34 @@ def save_cross_attention_map(
     out_dir = "attn_token_maps"
     _os.makedirs(out_dir, exist_ok=True)
 
-    # === 토큰별로 한 장씩 저장 ===
-    for tok_idx in range(txt_len):
-        # [img_len]
-        vec = attn_mean[tok_idx]  # [img_len]
+    # ============================================
+    # 3) 선택된 토큰들에 대해 한 장씩 heatmap 저장
+    # ============================================
+    for tok_idx in token_indices:
+        if tok_idx >= txt_len:
+            continue
+
+        vec = attn_mean[tok_idx]          # [img_len]
         vec = vec.detach().cpu().float().numpy()
 
-        # 정규화 (0~1)
+        # 정규화 (0 ~ 1)
         vmin, vmax = vec.min(), vec.max()
         if vmax > vmin:
             vec = (vec - vmin) / (vmax - vmin)
         else:
             vec = _np.zeros_like(vec)
 
-        # [img_h, img_w]로 reshape
-        heatmap = vec.reshape(img_h, img_w)  # 여기서 shape 정확히 맞춰줌
+        # [img_h, img_w] 로 reshape
+        heatmap = vec.reshape(img_h, img_w)
 
-        # 0~255 uint8로 변환 (그레이스케일)
+        # 0~255 uint8 그레이스케일
         img_arr = (heatmap * 255.0).clip(0, 255).astype("uint8")
-
-        # 그레이스케일 -> L 모드 이미지
         pil_img = Image.fromarray(img_arr, mode="L")
 
-        # 보기 좋게 키우고 싶으면 (x4 업스케일)
+        # 보기 좋게 x4 업스케일
         scale = 4
         pil_img = pil_img.resize((img_w * scale, img_h * scale), resample=Image.NEAREST)
-        pil_img = pil_img.convert("RGB")  # RGB로 저장
+        pil_img = pil_img.convert("RGB")
 
         save_path = _os.path.join(
             out_dir,
@@ -183,7 +216,11 @@ def save_cross_attention_map(
         )
         pil_img.save(save_path)
 
-    print(f"✅ Saved token-wise attention maps to {out_dir} for id={attn_id}, layer={layer_tag}, t={attn_t}")
+    print(
+        f"✅ [save_cross_attention_map] Saved {len(token_indices)} token maps "
+        f"({img_h}x{img_w}) to {out_dir} for id={attn_id}, layer={layer_tag}, t={attn_t}"
+    )
+
 
 
 
