@@ -90,16 +90,13 @@ def save_cross_attention_map(
     txt_len: int,
     img_len: int,
     layer_tag: str,
-    inp_target_s=None,
+    inp_target_s=None,  # 이제는 사용하지 않지만, 기존 시그니처 유지
 ):
     """
     attn_weights: [B, H, Q, K] (Q = txt_len + img_len, K = txt_len + img_len)
     txt_len: 텍스트 토큰 개수
     img_len: 이미지 토큰 개수
     layer_tag: "MB" / "SB" 등 레이어 구분용 문자열
-    inp_target_s:
-        - PIL.Image.Image 이거나
-        - 원본 이미지 경로 (str) 라고 가정
     info:
         - 필수: id, t
         - 선택: q_idx, head_idx, img_size=(H,W), save_attn(bool)
@@ -123,6 +120,8 @@ def save_cross_attention_map(
     if q_idx >= txt_len:
         # q_idx가 범위를 벗어나면 그냥 0번으로
         q_idx = 0
+    if head_idx >= H:
+        head_idx = 0
 
     attn_for_vis = attn_text_to_img[0, head_idx, q_idx]  # [img_len]
 
@@ -139,14 +138,15 @@ def save_cross_attention_map(
     # [img_len] -> [H, W] 로 reshape 하기 위해 임시 4D 텐서 모양을 맞춰줌
     attn_for_vis = attn_for_vis.view(1, 1, 1, img_len)  # [B=1, H=1, Q=1, K=img_len]
 
-    # base image 준비
+    # === 여기서 base_image를 흰색(or 검은색) 캔버스로 생성 ===
     from PIL import Image
-    base_image = None
-    base_image_path = None
-    if isinstance(inp_target_s, Image.Image):
-        base_image = inp_target_s
-    elif isinstance(inp_target_s, str):
-        base_image_path = inp_target_s
+
+    # 흰색 배경
+    base_image = Image.new("RGB", (img_w, img_h), "white")
+    # 검은색 배경 원하면 위 줄 대신 아래 사용
+    # base_image = Image.new("RGB", (img_w, img_h), "black")
+
+    base_image_path = None  # 더 이상 사용 안 함
 
     # 파일 이름용 id, t
     attn_id = info.get("id", "unknown")
@@ -163,6 +163,7 @@ def save_cross_attention_map(
         base_image=base_image,
         base_image_path=base_image_path,
     )
+
 
 
 class EmbedND(nn.Module):
