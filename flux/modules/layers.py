@@ -84,7 +84,85 @@ def overlay_attention_map(
     Image.fromarray(overlayed).save(save_path)
     print(f"📸 Attention overlay saved to: {save_path}")
 
+def save_cross_attention_map(
+    attn_weights: torch.Tensor,
+    info: dict,
+    txt_len: int,
+    img_len: int,
+    layer_tag: str,
+    inp_target_s=None,
+):
+    """
+    attn_weights: [B, H, Q, K] (Q = txt_len + img_len, K = txt_len + img_len)
+    txt_len: 텍스트 토큰 개수
+    img_len: 이미지 토큰 개수
+    layer_tag: "MB" / "SB" 등 레이어 구분용 문자열
+    inp_target_s:
+        - PIL.Image.Image 이거나
+        - 원본 이미지 경로 (str) 라고 가정
+    info:
+        - 필수: id, t
+        - 선택: q_idx, head_idx, img_size=(H,W), save_attn(bool)
+    """
 
+    # 저장할지 말지 플래그 (없으면 False)
+    if not info.get("save_attn", False):
+        return
+
+    # text query index (예: subject 토큰 인덱스)
+    q_idx = int(info.get("q_idx", 0))
+    head_idx = int(info.get("head_idx", 0))
+
+    B, H, Q, K = attn_weights.shape
+
+    # text query만 남기고, key는 image 영역만 남긴 cross-attention으로 변환
+    # Q: [0:txt_len] -> 텍스트 query, K: [txt_len:txt_len+img_len] -> 이미지 key
+    attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len + img_len]  # [B, H, txt_len, img_len]
+
+    # 시각화할 query 하나 뽑기 (B=0, head=head_idx, query=q_idx)
+    if q_idx >= txt_len:
+        # q_idx가 범위를 벗어나면 그냥 0번으로
+        q_idx = 0
+
+    attn_for_vis = attn_text_to_img[0, head_idx, q_idx]  # [img_len]
+
+    # img_size 결정
+    img_h, img_w = info.get("img_size", (48, 32))
+    if img_h * img_w != img_len:
+        # 자동 추론 (완전 정사각형이면 그걸 쓰고, 아니면 1 x img_len)
+        side = int(img_len ** 0.5)
+        if side * side == img_len:
+            img_h, img_w = side, side
+        else:
+            img_h, img_w = 1, img_len
+
+    # [img_len] -> [H, W] 로 reshape 하기 위해 임시 4D 텐서 모양을 맞춰줌
+    attn_for_vis = attn_for_vis.view(1, 1, 1, img_len)  # [B=1, H=1, Q=1, K=img_len]
+
+    # base image 준비
+    from PIL import Image
+    base_image = None
+    base_image_path = None
+    if isinstance(inp_target_s, Image.Image):
+        base_image = inp_target_s
+    elif isinstance(inp_target_s, str):
+        base_image_path = inp_target_s
+
+    # 파일 이름용 id, t
+    attn_id = info.get("id", "unknown")
+    attn_t = info.get("t", 0)
+
+    # overlay 저장
+    overlay_attention_map(
+        id=f"{attn_id}_{layer_tag}",
+        t=attn_t,
+        attn_weights=attn_for_vis,  # 이미 text-to-image 부분만 남김
+        q_idx=0,                    # 이미 Q=1 이라 0만 존재
+        h_idx=0,                    # H=1
+        img_size=(img_h, img_w),
+        base_image=base_image,
+        base_image_path=base_image_path,
+    )
 
 
 class EmbedND(nn.Module):
