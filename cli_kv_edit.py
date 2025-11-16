@@ -306,7 +306,8 @@ class FluxEditor_CLI:
             inp_target = prepare(self.t5, self.clip, init_image, prompt=opts.target_prompt)
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
             inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
-            from transformers import CLIPTokenizer
+            info['token_list'] = inp_target['token_list']
+            info_r['token_list'] = inp_target['token_list']
 
             # 1. 진짜 CLIP tokenizer 직접 불러오기
             # tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
