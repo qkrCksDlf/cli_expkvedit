@@ -77,6 +77,8 @@ class CrossAttentionTracker:
         # (4) normalize
         heat = (heat - heat.min()) / (heat.max() - heat.min() + 1e-10)
 
+        heat = heat.to(torch.float32).cpu()
+
         # (5) save
         t_str = f"{float(t):.3f}".replace(".", "_")
         out_dir = os.path.join(self.out_root, str(self.attn_id), f"t_{t_str}")
@@ -92,3 +94,4 @@ class CrossAttentionTracker:
         # 다음 step을 위해 clear + img_len 리셋
         self.cross_attn_list = []
         self.img_len = None
+
