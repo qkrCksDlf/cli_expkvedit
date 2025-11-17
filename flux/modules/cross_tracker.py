@@ -1,5 +1,3 @@
-# flux/modules/cross_tracker.py
-
 import os
 import numpy as np
 import torch
@@ -18,14 +16,31 @@ class CrossAttentionTracker:
         self.attn_id = attn_id
 
         self.cross_attn_list = []   # 각 layer에서 수집한 attn [B,H,txt,img]
+        self.img_len = None         # 🔥 기준이 되는 img_len 하나만 사용
 
     def add(self, attn):
         """
         attn: [B, H, txt_len, img_len]
         """
+        img_len = attn.shape[-1]
+
+        # 처음 들어온 해상도를 기준으로 삼음
+        if self.img_len is None:
+            self.img_len = img_len
+            # print(f"[Tracker] set img_len = {self.img_len}")
+
+        # 해상도가 다르면 이 timestep에서는 무시
+        if img_len != self.img_len:
+            print(
+                f"[Tracker] skip attn with img_len={img_len}, "
+                f"expected {self.img_len}"
+            )
+            return
+
         self.cross_attn_list.append(attn.detach().cpu())
 
     def save_mask(self, t):
+        # 모인 게 없으면 패스
         if len(self.cross_attn_list) == 0:
             return
 
@@ -37,6 +52,9 @@ class CrossAttentionTracker:
         # (2) dog 토큰 index 선택
         if self.token_idx >= attn.shape[1]:
             print(f"[Tracker] WARNING token_idx {self.token_idx} out of range")
+            # 다음 timestep을 위해 초기화
+            self.cross_attn_list = []
+            self.img_len = None
             return
 
         dog_vec = attn[0, self.token_idx]  # [img_len]
@@ -48,7 +66,7 @@ class CrossAttentionTracker:
         if side * side == img_len:
             h = w = side
         else:
-            # factorization
+            # factorization로 근사
             h = int(np.sqrt(img_len))
             while h > 1 and img_len % h != 0:
                 h -= 1
@@ -71,5 +89,6 @@ class CrossAttentionTracker:
 
         print(f"✅ Tracker saved mask t={t:.3f} at {out_dir}")
 
-        # 다음 step을 위해 clear
+        # 다음 step을 위해 clear + img_len 리셋
         self.cross_attn_list = []
+        self.img_len = None
