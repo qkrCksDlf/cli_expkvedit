@@ -681,6 +681,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             
             if info['t'] < 0.773 and info['id'] == 16:
                 print("실행!")
+                input()
                 info['mask'] = info['union_mask']
                 info['mask_indices'] = info['union_mask_indices']
                 # source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
