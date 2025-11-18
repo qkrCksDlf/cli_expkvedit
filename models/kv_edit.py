@@ -96,6 +96,8 @@ class Flux_kv_edit_inf(only_Flux):
         
         denoise_timesteps = get_schedule(opts.denoise_num_steps, inp["img"].shape[1], shift=(self.name != "flux-schnell"))
         denoise_timesteps = denoise_timesteps[opts.skip_step:]
+        print(denoise_timesteps)
+        input()
     
         z0 = inp["img"]
 
