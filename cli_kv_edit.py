@@ -489,7 +489,9 @@ class FluxEditor_CLI:
             
             # Save results
             output_path = self.save_result(edited_image, opts, self.args.mask_image)
-            
+
+            print(info['t'])
+            input()
             print(f"\n✅ Editing completed successfully!")
             print(f"Output saved to: {output_path}")
             
