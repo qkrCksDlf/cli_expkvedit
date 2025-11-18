@@ -687,6 +687,8 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
                 # source_img_k_s[:, :, mask_indices, ...] = img_k
                 # source_img_v_s[:, :, mask_indices, ...] = img_v
+
+            attention_with_attnmap_injection
             else:
                 source_img_k_s[:, :, mask_indices, ...] = img_k
                 source_img_v_s[:, :, mask_indices, ...] = img_v
@@ -695,7 +697,10 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             
             k = torch.cat((txt_k, source_img_k_s), dim=2)
             v = torch.cat((txt_v, source_img_v_s), dim=2)
-            attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
+            if info['t'] < 0.773 and info['id']==16:
+                attn, attn_weights = attention_with_attnmap_injection(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
+            else: 
+                attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
             txt_len = 512
             img_len = source_img_k_s.shape[2]
             attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len+img_len]
