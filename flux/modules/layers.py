@@ -5,7 +5,7 @@ import torch
 from einops import rearrange
 from torch import Tensor, nn
 
-from flux.math import attention, rope,apply_rope
+from flux.math import attention, rope,apply_rope, attention_with_attnmap_injection
 
 import os
 
