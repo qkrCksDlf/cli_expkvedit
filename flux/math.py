@@ -46,6 +46,23 @@ def attention(
         return out
 
 
+def attention_with_attnmap_injection(q: Tensor, k: Tensor, v: Tensor, pe: Tensor, attnmap_idxs, old_attnmaps) -> Tensor:
+    q, k = apply_rope(q, k, pe)
+
+    # original attn
+    # x= torch.nn.functional.scaled_dot_product_attention(q, k, v)
+    # x = rearrange(x, "B H L D -> B L (H D)")
+
+    # get attn map
+    d_k = q.shape[-1]  # head_dim (D)
+    attn_map = torch.matmul(q, k.transpose(-2, -1)) / (d_k ** 0.5)  # [B, H, L, L]
+    attn_map = torch.softmax(attn_map, dim=-1)
+    # inject attn map
+    for idx,old_attnmap in zip(attnmap_idxs,old_attnmaps):
+        attn_map[:,:,512:,idx] = old_attnmap
+    x = attn_map @ v
+    return x, attn_map
+
 def rope(pos: Tensor, dim: int, theta: int) -> Tensor:
     assert dim % 2 == 0
     scale = torch.arange(0, dim, 2, dtype=torch.float64, device=pos.device) / dim # dim =16 + 56 + 56 
