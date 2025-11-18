@@ -486,7 +486,7 @@ class FluxEditor_CLI:
             # Perform editing -> mask는 소스/레퍼런스/union 선택.
             edited_image = self.edit(z0, zt, info, z0_r, zt_r, info_r, encoded_image, encoded_image2, mask2, opts, union_mask)
             
-            
+            print(info['t'])
             # Save results
             output_path = self.save_result(edited_image, opts, self.args.mask_image)
 
