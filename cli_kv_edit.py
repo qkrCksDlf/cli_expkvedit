@@ -311,8 +311,8 @@ class FluxEditor_CLI:
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
             inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
             # info['token_list'] = inp_target['token_list']
-            # print(inp_target['token_list'])
-            # input()
+            print(inp_target['token_list'])
+            input()
             # info_r['token_list'] = inp_target['token_list']
             # inp_target.pop("token_list", None)
             # inp_target2.pop("token_list", None)
@@ -490,8 +490,6 @@ class FluxEditor_CLI:
             # Save results
             output_path = self.save_result(edited_image, opts, self.args.mask_image)
 
-            print(info['t'])
-            input()
             print(f"\n✅ Editing completed successfully!")
             print(f"Output saved to: {output_path}")
             
