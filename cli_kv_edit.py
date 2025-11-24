@@ -435,7 +435,7 @@ class FluxEditor_CLI:
                 self.args.ref_image, self.args.ref_mask_image)
 
             ref_image, mask3, height, width = self.load_and_prepare_images(
-                self.args.ref_image, "./xmask.png")
+                self.args.ref_image, self.args.ref_mask_image)
 
             #유니온 마스크가 필요하다면 사용. 아니면 주석처리
             #추가 수정 필요 (불필요한 인자)
