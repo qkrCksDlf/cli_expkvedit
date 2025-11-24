@@ -679,7 +679,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
 
             print(info['t'])
             
-            if info['t'] < 0.34:
+            if info['t'] >100:
                 print("실행!")
                 #info['mask'] = info['union_mask']
                 #info['mask_indices'] = info['union_mask_indices']
