@@ -439,10 +439,10 @@ class FluxEditor_CLI:
 
             #유니온 마스크가 필요하다면 사용. 아니면 주석처리
             #추가 수정 필요 (불필요한 인자)
-            # _, union_mask, _, _ = self.load_and_prepare_images_u(
-            #     self.args.input_image, self.args.mask_image, self.args.ref_mask_image)
+            _, union_mask, _, _ = self.load_and_prepare_images_u(
+                self.args.input_image, self.args.mask_image, self.args.ref_mask_image)
 
-            union_mask = mask3
+            #union_mask = mask3
             # Override width/height if specified
             if self.args.width > 0:
                 width = self.args.width
