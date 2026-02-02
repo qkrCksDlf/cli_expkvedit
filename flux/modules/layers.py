@@ -557,6 +557,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...].clone()
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...].clone()
+                input()
             
             else:
                 source_img_k_s[:, :, mask_indices, ...] = img_k
@@ -648,8 +649,10 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             
             vaital_layers = [0,1,2,17,18,25,28,53,54,56]
             if info['vital_c'] in vaital_layers:
+                print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...].clone()
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...].clone()
+                input()
             else:
                 source_img_k_s[:, :, mask_indices, ...] = img_k
                 source_img_v_s[:, :, mask_indices, ...] = img_v
