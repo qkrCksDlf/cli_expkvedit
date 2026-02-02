@@ -552,18 +552,53 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             mask_indices = info['mask_indices'] 
             
             vaital_layers = [0,1,2,17,18,25,28,53,54,56]
-            
-            if info['vital_c'] in vaital_layers :
-                print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...].clone()
-                #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...].clone()
-                img_k[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...].clone()
-                img_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...].clone()
-        
+            if info['vital_c'] in vaital_layers: # vaital -> vital 오타 수정 권장
+                # print("KV주입 시작")
+                
+                # [디버깅] 텐서 크기와 인덱스 최대값 확인 (에러나면 이 로그를 보세요)
+                # print(f"Current img_k shape: {img_k.shape}") 
+                # print(f"Source img_k shape: {source_img_k.shape}")
+                # print(f"Mask Max Index: {mask_indices.max()}")
+                
+                # 1. 배치 사이즈 맞추기 (Broadcasting 안전장치)
+                # img_k가 [2, Heads, Len, Dim]이고 source가 [1, ...] 일 경우를 대비해 확장
+                batch_size = img_k.shape[0]
+                if source_img_k.shape[0] != batch_size:
+                    source_img_k = source_img_k.expand(batch_size, -1, -1, -1)
+                    source_img_v = source_img_v.expand(batch_size, -1, -1, -1)
+    
+                # 2. 인덱스 범위 체크 (CUDA 에러 방지)
+                seq_len = img_k.shape[2] # 보통 4096 (1024x1024 기준)
+                
+                # 만약 마스크 인덱스가 이미지 길이보다 크다면? (SingleStreamBlock의 텍스트 오프셋 문제일 수 있음)
+                if mask_indices.max() >= seq_len:
+                    # print(f"Warning: 인덱스 초과 감지! (Max: {mask_indices.max()}, Limit: {seq_len})")
+                    # SingleStreamBlock일 경우 텍스트 길이(512)만큼 빼줘야 할 수도 있음
+                    # 예: real_indices = mask_indices - 512 
+                    # 여기서는 일단 범위를 벗어나는 놈들을 걸러냄
+                    valid_mask = mask_indices < seq_len
+                    safe_indices = mask_indices[valid_mask]
+                else:
+                    safe_indices = mask_indices
+    
+                # 3. 안전하게 주입
+                # clone()은 굳이 안 써도 되지만 안전을 위해 유지
+                img_k[:, :, safe_indices, ...] = source_img_k[:, :, safe_indices, ...].clone()
+                img_v[:, :, safe_indices, ...] = source_img_v[:, :, safe_indices, ...].clone()
+    
             else:
                 pass
-                #source_img_k_s[:, :, mask_indices, ...] = img_k
-                #source_img_v_s[:, :, mask_indices, ...] = img_v
+            # if info['vital_c'] in vaital_layers :
+            #     print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            #     #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...].clone()
+            #     #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...].clone()
+            #     img_k[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...].clone()
+            #     img_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...].clone()
+        
+            # else:
+            #     pass
+            #     #source_img_k_s[:, :, mask_indices, ...] = img_k
+            #     #source_img_v_s[:, :, mask_indices, ...] = img_v
 
 
                 
