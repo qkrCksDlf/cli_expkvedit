@@ -158,19 +158,22 @@ class Flux_kv(Flux):
 
         cnt = 0
         for block in self.double_blocks:
-            info['id'] = cnt
-            print(info['id'])
-            img, txt = block(img=img, txt=txt, vec=vec, pe=pe, info=info, info_s=info_s, zt_r=zt_r, inp_target_s=inp_target_s)
-            cnt += 1
+          info['id'] = cnt
+          if info['id'] == 0:
+            print("wowowowowowowowwowowowowowowowowo")
+            input()
+          print(info['id'])
+          img, txt = block(img=img, txt=txt, vec=vec, pe=pe, info=info, info_s=info_s, zt_r=zt_r, inp_target_s=inp_target_s)
+          cnt += 1
 
         input()
         cnt = 0
         x = torch.cat((txt, img), 1) 
         for block in self.single_blocks:
-            info['id'] = cnt
-            print(info['id'])
-            x = block(x, vec=vec, pe=pe, info=info, info_s=info_s, zt_r=zt_r, inp_target_s=inp_target_s)
-            cnt += 1
+          info['id'] = cnt
+          print(info['id'])
+          x = block(x, vec=vec, pe=pe, info=info, info_s=info_s, zt_r=zt_r, inp_target_s=inp_target_s)
+          cnt += 1
 
         input()
         img = x[:, txt.shape[1] :, ...]
