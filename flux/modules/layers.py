@@ -558,8 +558,9 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
         
             else:
+                pass
                 #source_img_k_s[:, :, mask_indices, ...] = img_k
-                source_img_v_s[:, :, mask_indices, ...] = img_v
+                #source_img_v_s[:, :, mask_indices, ...] = img_v
 
 
                 
@@ -650,8 +651,9 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
             else:
+                pass
                 #source_img_k_s[:, :, mask_indices, ...] = img_k
-                source_img_v_s[:, :, mask_indices, ...] = img_v
+                #source_img_v_s[:, :, mask_indices, ...] = img_v
                 
             
             
