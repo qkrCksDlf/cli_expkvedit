@@ -559,22 +559,17 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             # except ValueError:
             #     # 딕셔너리에 해당 키가 없으면, 인덱스를 찾을 수 없습니다.
             #     pass
-                
-            # if key_index <= 4 and info['t']>0.4:
-            #     # [조건 만족] K,V 주입
-            #     print(f"Index {key_index} >= 4. Injecting K/V for {feature_k_name}") # (디버깅용)
-            #     source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-            #     source_img_k_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            vatal_layers = [0,1,2,17,18,25,28,53,54,56]
             
-            # else:
-            #     # [조건 불만족] K,V 주입 대신 Self-Attention 수행
-            #     print(f"Index {key_index} < 4. Using Self-Attention for {feature_k_name}") # (디버깅용)
-            #     source_img_k_s[:, :, mask_indices, ...] = img_k
-            #     source_img_v_s[:, :, mask_indices, ...] = img_v
+            if info['vital_c'] in valtal_layers :
+                print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+                source_img_k_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            
+            else:
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
 
-
-            source_img_k_s[:, :, mask_indices, ...] = img_k
-            source_img_v_s[:, :, mask_indices, ...] = img_v
 
                 
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
@@ -679,9 +674,13 @@ class SingleStreamBlock_kv(SingleStreamBlock):
 
             print(info['t'])
             
-           
-            source_img_k_s[:, :, mask_indices, ...] = img_k
-            source_img_v_s[:, :, mask_indices, ...] = img_v
+            vatal_layers = [0,1,2,17,18,25,28,53,54,56]
+            if info['vital_c'] in valtal_layers:
+                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            else:
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
                 
             
             
