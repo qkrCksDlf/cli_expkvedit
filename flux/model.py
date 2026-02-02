@@ -156,24 +156,26 @@ class Flux_kv(Flux):
             mask_indices = info['mask_indices'] 
             info['pe_mask'] = torch.cat((pe[:, :, :512, ...],pe[:, :, mask_indices+512, ...]),dim=2)
 
+        xxc = 0
         cnt = 0
         for block in self.double_blocks:
           info['id'] = cnt
-          if info['id'] == 0:
-            print("wowowowowowowowwowowowowowowowowo")
-            input()
+          info['vital_c'] = xxc
           print(info['id'])
           img, txt = block(img=img, txt=txt, vec=vec, pe=pe, info=info, info_s=info_s, zt_r=zt_r, inp_target_s=inp_target_s)
           cnt += 1
+          xxc += 1
 
         input()
         cnt = 0
         x = torch.cat((txt, img), 1) 
         for block in self.single_blocks:
           info['id'] = cnt
+          info['vital_c'] = xxc
           print(info['id'])
           x = block(x, vec=vec, pe=pe, info=info, info_s=info_s, zt_r=zt_r, inp_target_s=inp_target_s)
           cnt += 1
+          xxc += 1
 
         input()
         img = x[:, txt.shape[1] :, ...]
