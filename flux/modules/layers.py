@@ -522,60 +522,62 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
         
         feature_k_name = str(info['t']) + '_' + str(info['id']) + '_' + 'MB' + '_' + 'K'
         feature_v_name = str(info['t']) + '_' + str(info['id']) + '_' + 'MB' + '_' + 'V'
- # ... (앞부분 동일) ...
-        
-
         if info['inverse']:
-            # Inversion 과정: 현재 특징을 저장
             info['feature'][feature_k_name] = img_k.cpu()
             info['feature'][feature_v_name] = img_v.cpu()
-            
             q = torch.cat((txt_q, img_q), dim=2)
             k = torch.cat((txt_k, img_k), dim=2)
             v = torch.cat((txt_v, img_v), dim=2)
-            
             if 'attention_mask' in info:
-                attn = attention(q, k, v, pe=pe, attention_mask=info['attention_mask'])
+                attn = attention(q, k, v, pe=pe,attention_mask=info['attention_mask'])
             else:
                 attn = attention(q, k, v, pe=pe)
     
         else:
-            # Generation (Denoising) 과정
+            img_mod1, img_mod2 = self.img_mod(vec)
+            txt_mod1, txt_mod2 = self.txt_mod(vec)
+            # prepare reference image for attention
+            img_modulated_r = self.img_norm1(zt_r)
+            img_modulated_r = (1 + img_mod1.scale) * img_modulated_r + img_mod1.shift
+            img_qkv_r = self.img_attn.qkv(img_modulated_r)
+            img_q_r, img_k_r, img_v_r = rearrange(img_qkv_r, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)          
+            img_q_r, img_k_r = self.img_attn.norm(img_q_r, img_k_r, img_v_r)
             
-            # 1. 레퍼런스(Source) 특징 가져오기
-            # (info['feature']에 저장해둔 레퍼런스 이미지의 K, V)
-            source_img_k = info['feature'][feature_k_name].to(img.device)
-            source_img_v = info['feature'][feature_v_name].to(img.device)
-            
-            # 2. 베이스는 '현재 생성 중인 특징(img_k, img_v)'으로 시작합니다.
-            # 그래야 마스크가 아닌 부분("그 외 부분")이 현재 생성 흐름을 따릅니다.
-            mixed_img_k = img_k.clone()
-            mixed_img_v = img_v.clone()
-            
+
+            source_img_k = info['feature'][feature_k_name].to(img.device) #레퍼런스
+            source_img_v = info['feature'][feature_v_name].to(img.device) #레퍼런스
+            source_img_k_s = info_s['feature'][feature_k_name].to(img.device) #소스
+            source_img_v_s = info_s['feature'][feature_v_name].to(img.device) #소스
+            #원본
             mask_indices = info['mask_indices'] 
+            # key_list_s = list(info_s['feature'].keys())
             
-            # 중요 레이어 리스트
+            # key_index = -1 # 기본값 (못 찾음)
+            # try:
+            #     # 2. 현재 키 이름(feature_k_name)의 인덱스를 찾습니다.
+            #     key_index = key_list_s.index(feature_k_name)
+            # except ValueError:
+            #     # 딕셔너리에 해당 키가 없으면, 인덱스를 찾을 수 없습니다.
+            #     pass
             vaital_layers = [0,1,2,17,18,25,28,53,54,56]
             
-            # 3. Vital Layer일 때만 마스크 부분에 레퍼런스를 주입 (Replacement)
-            if info['vital_c'] in vaital_layers:
-                # print("KV Injection applied!") 
-                # 마스크 위치에만 레퍼런스(source)를 덮어씌움
-                mixed_img_k[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-                mixed_img_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            if info['vital_c'] in vaital_layers :
+                print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
             
-            # Vital Layer가 아닐 때는 mixed_img_k가 이미 img_k(현재값)이므로 아무것도 안 해도 됨
-            # (사용자님의 기존 else 로직은 "마스크 부분에 현재값을 넣는다"였는데, 
-            #  애초에 img_k로 시작하면 else 자체가 필요 없어집니다.)
+            else:
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
 
-            # 4. 최종 Attention 연산
-            q = torch.cat((txt_q, img_q), dim=2) 
-            k = torch.cat((txt_k, mixed_img_k), dim=2) # mixed_img_k 사용
-            v = torch.cat((txt_v, mixed_img_v), dim=2) # mixed_img_v 사용
 
-            attn, attn_weights = attention(q, k, v, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
-            
-            # ... (트래킹 및 맵 저장 로직 동일) ...
+                
+            q = torch.cat((txt_q, img_q), dim=2) #소스이미지
+            k = torch.cat((txt_k, source_img_k_s), dim=2) 
+            v = torch.cat((txt_v, source_img_v_s), dim=2)
+
+            #attn = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'])
+            attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
             txt_len = txt.shape[1]
             img_len = img.shape[1]
             attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len+img_len]
@@ -622,70 +624,85 @@ class SingleStreamBlock_kv(SingleStreamBlock):
     ):
         super().__init__(hidden_size, num_heads, mlp_ratio, qk_scale)
 
-    def forward(self, x: Tensor, vec: Tensor, pe: Tensor, info, info_s, zt_r, inp_target_s) -> Tensor:
+    def forward(self,x: Tensor, vec: Tensor, pe: Tensor, info, info_s, zt_r, inp_target_s) -> Tensor:
         mod, _ = self.modulation(vec)
         x_mod = (1 + mod.scale) * self.pre_norm(x) + mod.shift
         qkv, mlp = torch.split(self.linear1(x_mod), [3 * self.hidden_size, self.mlp_hidden_dim], dim=-1)
 
         q, k, v = rearrange(qkv, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
         q, k = self.norm(q, k, v)
-
-        # -------------------------------------------------
-        # 텍스트/이미지 분리 (Flux 구조상 앞부분이 Text, 뒷부분이 Image)
-        # 기존 코드 기준 512가 텍스트 토큰 길이
-        txt_len = 512
+        img_k = k[:, :, 512:, ...]
+        img_v = v[:, :, 512:, ...]
         
-        # 현재 레이어에서 계산된 K, V 분리
-        txt_k, img_k = k[:, :, :txt_len, ...], k[:, :, txt_len:, ...]
-        txt_v, img_v = v[:, :, :txt_len, ...], v[:, :, txt_len:, ...]
-        # -------------------------------------------------
+        txt_k = k[:, :, :512, ...]
+        txt_v = v[:, :, :512, ...]
+    
 
         feature_k_name = str(info['t']) + '_' + str(info['id']) + '_' + 'SB' + '_' + 'K'
         feature_v_name = str(info['t']) + '_' + str(info['id']) + '_' + 'SB' + '_' + 'V'
+
+
         
         if info['inverse']:
-            # Inversion: 나중을 위해 현재 이미지 특징(img_k, img_v) 저장
-            info['feature'][feature_k_name] = img_k.detach().cpu()
-            info['feature'][feature_v_name] = img_v.detach().cpu()
-            
+            info['feature'][feature_k_name] = img_k.cpu()
+            info['feature'][feature_v_name] = img_v.cpu()
             if 'attention_mask' in info:
-                attn = attention(q, k, v, pe=pe, attention_mask=info['attention_mask'])
+                attn = attention(q, k, v, pe=pe,attention_mask=info['attention_mask'])
             else:
                 attn = attention(q, k, v, pe=pe)
             
         else:
-            # Generation (Denoising)
+
+            feature_keys = list(info['feature'].keys())
+            feature_k_index = feature_keys.index(feature_k_name)
             
-            # 1. 저장된 레퍼런스 특징 가져오기
-            source_img_k = info['feature'][feature_k_name].to(x.device)
-            source_img_v = info['feature'][feature_v_name].to(x.device)
             
-            # 2. 베이스는 '현재 생성 중인 특징(img_k)'을 복제하여 사용 (배경 보존)
-            mixed_img_k = img_k.clone()
-            mixed_img_v = img_v.clone()
+            source_img_k = info['feature'][feature_k_name].to(x.device) #레퍼런스
+            source_img_v = info['feature'][feature_v_name].to(x.device) #레퍼런스
+
+            source_img_k_s = info_s['feature'][feature_k_name].to(x.device)#소스
+            source_img_v_s = info_s['feature'][feature_v_name].to(x.device)#소스
         
             mask_indices = info['mask_indices']
-            vaital_layers = [0,1,2,17,18,25,28,53,54,56] # Injection을 적용할 주요 레이어
+            #원래는 이렇게 했음
+            #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
             
-            # 3. Vital Layer인 경우에만, 마스크 영역을 레퍼런스로 교체
+            #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
+            #source_img_k_s[:, :, mask_indices, ...] = img_k
+            
+            #source_img_v_s[:, :, mask_indices, ...] = img_v
+
+            print(info['t'])
+            
+            vaital_layers = [0,1,2,17,18,25,28,53,54,56]
             if info['vital_c'] in vaital_layers:
-                # print(f"SB Injection applied at layer {info['vital_c']}")
-                mixed_img_k[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-                mixed_img_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
+                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+            else:
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
+                
             
-            # 4. 텍스트 부분과 다시 결합 (Concat)
-            k_mixed = torch.cat((txt_k, mixed_img_k), dim=2)
-            v_mixed = torch.cat((txt_v, mixed_img_v), dim=2)
-
-            # 5. Attention 수행
-            attn, attn_weights = attention(q, k_mixed, v_mixed, pe=pe, pe_q=info['pe_mask'], attention_mask=info['attention_scale'], return_weights=True)
             
-            # Logging / Tracking (Optional)
+            k = torch.cat((txt_k, source_img_k_s), dim=2)
+            v = torch.cat((txt_v, source_img_v_s), dim=2)
+            attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
+            txt_len = 512
+            img_len = source_img_k_s.shape[2]
+            attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len+img_len]
             if info.get("track_cross", False):
-                img_len = mixed_img_k.shape[2]
-                attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len+img_len]
                 info["tracker"].add(attn_text_to_img)
+                
+            # === 여기서 cross-attention map 저장 ===
 
+            # save_cross_attention_map(
+            #     attn_weights=attn_weights,
+            #     info=info,
+            #     txt_len=txt_len,
+            #     img_len=img_len,
+            #     layer_tag="SB",
+            #     inp_target_s=inp_target_s,
+            # )
         # compute activation in mlp stream, cat again and run second linear layer
         output = self.linear2(torch.cat((attn, self.mlp_act(mlp)), 2))
         return x + mod.gate * output
