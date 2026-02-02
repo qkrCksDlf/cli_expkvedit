@@ -166,7 +166,7 @@ class Flux_kv(Flux):
           cnt += 1
           xxc += 1
 
-        input()
+        
         cnt = 0
         x = torch.cat((txt, img), 1) 
         for block in self.single_blocks:
@@ -177,7 +177,7 @@ class Flux_kv(Flux):
           cnt += 1
           xxc += 1
 
-        input()
+        
         img = x[:, txt.shape[1] :, ...]
 
         img = self.final_layer(img, vec)  # (N, T, patch_size ** 2 * out_channels)
