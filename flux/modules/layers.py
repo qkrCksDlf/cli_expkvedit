@@ -555,7 +555,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             if info['vital_c'] in vaital_layers :
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...])
+                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
         
             else:
                 source_img_k_s[:, :, mask_indices, ...] = img_k
