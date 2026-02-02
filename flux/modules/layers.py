@@ -559,9 +559,9 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             # except ValueError:
             #     # 딕셔너리에 해당 키가 없으면, 인덱스를 찾을 수 없습니다.
             #     pass
-            vatal_layers = [0,1,2,17,18,25,28,53,54,56]
+            vaital_layers = [0,1,2,17,18,25,28,53,54,56]
             
-            if info['vital_c'] in valtal_layers :
+            if info['vital_c'] in vaital_layers :
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 source_img_k_v[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
@@ -674,8 +674,8 @@ class SingleStreamBlock_kv(SingleStreamBlock):
 
             print(info['t'])
             
-            vatal_layers = [0,1,2,17,18,25,28,53,54,56]
-            if info['vital_c'] in valtal_layers:
+            vaital_layers = [0,1,2,17,18,25,28,53,54,56]
+            if info['vital_c'] in vaital_layers:
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
             else:
