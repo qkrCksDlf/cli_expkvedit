@@ -19,7 +19,7 @@ python cli_kv_edit.py \
     --ref_mask_image "x4.jpg" \
     --source_prompt "a cat is lying on the floor" \
     --target_prompt "a dog is lying on the floor" \
-    --attn_mask
+    --re_init
 ```
 
 ```
