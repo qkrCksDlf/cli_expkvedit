@@ -550,21 +550,13 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             source_img_v_s = info_s['feature'][feature_v_name].to(img.device) #소스
             #원본
             mask_indices = info['mask_indices'] 
-            # key_list_s = list(info_s['feature'].keys())
             
-            # key_index = -1 # 기본값 (못 찾음)
-            # try:
-            #     # 2. 현재 키 이름(feature_k_name)의 인덱스를 찾습니다.
-            #     key_index = key_list_s.index(feature_k_name)
-            # except ValueError:
-            #     # 딕셔너리에 해당 키가 없으면, 인덱스를 찾을 수 없습니다.
-            #     pass
             vaital_layers = [0,1,2,17,18,25,28,53,54,56]
             
             if info['vital_c'] in vaital_layers :
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...].clone()
+                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...].clone()
             
             else:
                 source_img_k_s[:, :, mask_indices, ...] = img_k
@@ -584,18 +576,6 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
 
             if info.get("track_cross", False):
                 info["tracker"].add(attn_text_to_img)
-
-        
-            # === 여기서 cross-attention map 저장 ===
-
-            # save_cross_attention_map(
-            #     attn_weights=attn_weights,
-            #     info=info,
-            #     txt_len=txt_len,
-            #     img_len=img_len,
-            #     layer_tag="MB",
-            #     inp_target_s=inp_target_s,
-            # )
 
         
         txt_attn, img_attn = attn[:, : txt.shape[1]], attn[:, txt.shape[1] :]
@@ -664,20 +644,12 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             source_img_v_s = info_s['feature'][feature_v_name].to(x.device)#소스
         
             mask_indices = info['mask_indices']
-            #원래는 이렇게 했음
-            #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-            
-            #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...] 
-            #source_img_k_s[:, :, mask_indices, ...] = img_k
-            
-            #source_img_v_s[:, :, mask_indices, ...] = img_v
 
-            print(info['t'])
             
             vaital_layers = [0,1,2,17,18,25,28,53,54,56]
             if info['vital_c'] in vaital_layers:
-                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
+                source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...].clone()
+                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...].clone()
             else:
                 source_img_k_s[:, :, mask_indices, ...] = img_k
                 source_img_v_s[:, :, mask_indices, ...] = img_v
@@ -693,16 +665,5 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             if info.get("track_cross", False):
                 info["tracker"].add(attn_text_to_img)
                 
-            # === 여기서 cross-attention map 저장 ===
-
-            # save_cross_attention_map(
-            #     attn_weights=attn_weights,
-            #     info=info,
-            #     txt_len=txt_len,
-            #     img_len=img_len,
-            #     layer_tag="SB",
-            #     inp_target_s=inp_target_s,
-            # )
-        # compute activation in mlp stream, cat again and run second linear layer
         output = self.linear2(torch.cat((attn, self.mlp_act(mlp)), 2))
         return x + mod.gate * output
