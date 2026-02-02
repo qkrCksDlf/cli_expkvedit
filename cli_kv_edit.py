@@ -575,7 +575,7 @@ def main():
     parser.add_argument(
         "--skip_step", 
         type=int, 
-        default=4,
+        default=0,
         help="Number of steps to skip during editing (default: 4). Lower values = more faithful to target prompt but may affect background preservation"
     )
     parser.add_argument(
