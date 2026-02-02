@@ -581,7 +581,7 @@ def main():
     parser.add_argument(
         "--inversion_guidance", 
         type=float, 
-        default=1.5,
+        default=1,
         help="Guidance scale for inversion process (default: 1.5). Higher values = stronger adherence to source prompt during inversion"
     )
     parser.add_argument(
