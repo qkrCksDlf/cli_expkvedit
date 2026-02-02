@@ -555,21 +555,17 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             if info['vital_c'] in vaital_layers :
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
-                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
-                k = torch.cat((txt_k, source_img_k_s), dim=2) 
-                v = torch.cat((txt_v, source_img_v_s), dim=2)
+                source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...])
         
             else:
-                #source_img_k_s[:, :, mask_indices, ...] = img_k
-                #source_img_v_s[:, :, mask_indices, ...] = img_v
-                k = torch.cat((txt_k, img_k), dim=2) 
-                v = torch.cat((txt_v, img_v), dim=2)
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
 
 
                 
             q = torch.cat((txt_q, img_q), dim=2) #소스이미지
-            #k = torch.cat((txt_k, source_img_k_s), dim=2) 
-            #v = torch.cat((txt_v, source_img_v_s), dim=2)
+            k = torch.cat((txt_k, source_img_k_s), dim=2) 
+            v = torch.cat((txt_v, source_img_v_s), dim=2)
 
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
             txt_len = txt.shape[1]
@@ -653,18 +649,14 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
-                k = torch.cat((txt_k, source_img_k_s), dim=2)
-                v = torch.cat((txt_v, source_img_v_s), dim=2)
             else:
-                k = torch.cat((txt_k, img_k), dim=2)
-                v = torch.cat((txt_v, img_v), dim=2)
-                #source_img_k_s[:, :, mask_indices, ...] = img_k
-                #source_img_v_s[:, :, mask_indices, ...] = img_v
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
                 
             
             
-            #k = torch.cat((txt_k, source_img_k_s), dim=2)
-            #v = torch.cat((txt_v, source_img_v_s), dim=2)
+            k = torch.cat((txt_k, source_img_k_s), dim=2)
+            v = torch.cat((txt_v, source_img_v_s), dim=2)
             attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
             txt_len = 512
             img_len = source_img_k_s.shape[2]
