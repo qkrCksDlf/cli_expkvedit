@@ -575,7 +575,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             mask_indices = info['mask_indices'] 
             
             vaital_layers = [0,1,17,18,25,28,53,54,56]
-            if info['vital_c'] in vaital_layers :
+            injected_from_reference = info['vital_c'] in vaital_layers
+            if injected_from_reference :
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
@@ -707,6 +708,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             k = torch.cat((txt_k, source_img_k_s), dim=2)
             v = torch.cat((txt_v, source_img_v_s), dim=2)
             #attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
+            injected_from_reference = info['vital_c'] in vaital_layers
             if injected_from_reference:
                 pe_no_injected = _remove_injected_latent_positional_embedding(pe, txt_k.shape[2], mask_indices)
                 attn, attn_weights = attention(
