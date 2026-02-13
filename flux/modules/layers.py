@@ -621,8 +621,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
-                kv_ref_alpha_k = _resolve_kv_blend_alpha(info, "kv_ref_alpha_k", 0.25)
-                kv_ref_alpha_v = _resolve_kv_blend_alpha(info, "kv_ref_alpha_v", 0.60)
+                kv_ref_alpha_k = _resolve_kv_blend_alpha(info, "kv_ref_alpha_k", 0.80)
+                kv_ref_alpha_v = _resolve_kv_blend_alpha(info, "kv_ref_alpha_v", 0.80)
                 _blend_kv_at_indices(source_img_k_s, source_img_k, mask_indices, kv_ref_alpha_k)
                 _blend_kv_at_indices(source_img_v_s, source_img_v, mask_indices, kv_ref_alpha_v)
         
@@ -744,8 +744,8 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
-                kv_ref_alpha_k = _resolve_kv_blend_alpha(info, "kv_ref_alpha_k", 0.25)
-                kv_ref_alpha_v = _resolve_kv_blend_alpha(info, "kv_ref_alpha_v", 0.60)
+                kv_ref_alpha_k = _resolve_kv_blend_alpha(info, "kv_ref_alpha_k", 0.80)
+                kv_ref_alpha_v = _resolve_kv_blend_alpha(info, "kv_ref_alpha_v", 0.80)
                 _blend_kv_at_indices(source_img_k_s, source_img_k, mask_indices, kv_ref_alpha_k)
                 _blend_kv_at_indices(source_img_v_s, source_img_v, mask_indices, kv_ref_alpha_v)
             else:
