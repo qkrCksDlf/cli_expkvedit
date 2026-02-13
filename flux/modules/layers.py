@@ -496,26 +496,28 @@ class LastLayer(nn.Module):
         x = self.linear(x)
         return x
 
-def _remove_kv_injected_key_positional_embedding(pe_k: Tensor, txt_len: int, latent_indices) -> Tensor:
-    """Disable RoPE only on injected latent key positions (text positions are preserved)."""
+def _remove_injected_latent_positional_embedding(pe: Tensor, txt_len: int, latent_indices) -> Tensor:
+    """Disable RoPE only on injected latent positions (keep text and non-injected latents)."""
     if latent_indices is None:
-        return pe_k
+        return pe
 
-    pe_k_no_injected = pe_k.clone()
-    idx = torch.as_tensor(latent_indices, device=pe_k_no_injected.device, dtype=torch.long).flatten()
+    pe_no_injected = pe.clone()
+    idx = torch.as_tensor(latent_indices, device=pe_no_injected.device, dtype=torch.long).flatten()
     if idx.numel() == 0:
-        return pe_k_no_injected
+        return pe_no_injected
 
-    key_pos = idx + txt_len
-    valid = (key_pos >= 0) & (key_pos < pe_k_no_injected.shape[2])
-    key_pos = key_pos[valid].unique()
-    if key_pos.numel() == 0:
-        return pe_k_no_injected
+    latent_pos = idx + txt_len
+    valid = (latent_pos >= 0) & (latent_pos < pe_no_injected.shape[2])
+    latent_pos = latent_pos[valid].unique()
+    if latent_pos.numel() == 0:
+        return pe_no_injected
 
-    pe_k_no_injected[:, :, key_pos, ...] = 0
-    pe_k_no_injected[:, :, key_pos, :, 0, 0] = 1
-    pe_k_no_injected[:, :, key_pos, :, 1, 1] = 1
-    return pe_k_no_injected
+    pe_no_injected[:, :, latent_pos, ...] = 0
+    pe_no_injected[:, :, latent_pos, :, 0, 0] = 1
+    pe_no_injected[:, :, latent_pos, :, 1, 1] = 1
+    return pe_no_injected
+
+
 
 
 class DoubleStreamBlock_kv(DoubleStreamBlock):
@@ -589,16 +591,29 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             v = torch.cat((txt_v, source_img_v_s), dim=2)
 
             #attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
-            pe_k_no_injected = _remove_kv_injected_key_positional_embedding(pe, txt.shape[1], mask_indices)
-            attn, attn_weights = attention(
-                q,
-                k,
-                v,
-                pe=pe_k_no_injected,
-                pe_q=info['pe_mask'],
-                attention_mask=info['attention_scale'],
-                return_weights=True,
-            )
+            if injected_from_reference:
+                pe_no_injected = _remove_injected_latent_positional_embedding(pe, txt.shape[1], mask_indices)
+                attn, attn_weights = attention(
+                    q,
+                    k,
+                    v,
+                    pe=pe_no_injected,
+                    pe_q=pe_no_injected,
+                    attention_mask=info['attention_scale'],
+                    return_weights=True,
+                )
+            else:
+                attn, attn_weights = attention(
+                    q,
+                    k,
+                    v,
+                    pe=pe,
+                    pe_q=info['pe_mask'],
+                    attention_mask=info['attention_scale'],
+                    return_weights=True,
+                )
+    
+            
 
 
             
@@ -692,17 +707,28 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             k = torch.cat((txt_k, source_img_k_s), dim=2)
             v = torch.cat((txt_v, source_img_v_s), dim=2)
             #attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
-            pe_k_no_injected = _remove_kv_injected_key_positional_embedding(pe, txt_k.shape[2], mask_indices)
-            attn, attn_weights = attention(
-                q,
-                k,
-                v,
-                pe=pe_k_no_injected,
-                pe_q=info['pe_mask'],
-                attention_mask=info['attention_scale'],
-                return_weights=True,
-            )
-            
+            if injected_from_reference:
+                pe_no_injected = _remove_injected_latent_positional_embedding(pe, txt_k.shape[2], mask_indices)
+                attn, attn_weights = attention(
+                    q,
+                    k,
+                    v,
+                    pe=pe_no_injected,
+                    pe_q=pe_no_injected,
+                    attention_mask=info['attention_scale'],
+                    return_weights=True,
+                    )
+            else:
+                attn, attn_weights = attention(
+                    q,
+                    k,
+                    v,
+                    pe=pe,
+                    pe_q=info['pe_mask'],
+                    attention_mask=info['attention_scale'],
+                    return_weights=True,
+                )
+                
             txt_len = 512
             img_len = source_img_k_s.shape[2]
             attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len+img_len]
