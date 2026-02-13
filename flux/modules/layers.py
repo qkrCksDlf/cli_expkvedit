@@ -518,6 +518,27 @@ def _remove_injected_latent_positional_embedding(pe: Tensor, txt_len: int, laten
     return pe_no_injected
 
 
+def _resolve_kv_blend_alpha(info, key: str, default: float) -> float:
+    """Resolve blend alpha with optional timestep decay to reduce late-step ghosting."""
+    alpha = float(max(0.0, min(1.0, info.get(key, default))))
+    t = info.get("t", None)
+    if t is None:
+        return alpha
+
+    if isinstance(t, torch.Tensor):
+        t = float(t.detach().flatten()[0].item())
+    else:
+        t = float(t)
+
+    # Typical schedule range is [1, 0]. Only decay in that regime.
+    if 0.0 <= t <= 1.5 and info.get("kv_ref_alpha_t_decay", True):
+        decay_floor = float(max(0.0, min(1.0, info.get("kv_ref_alpha_decay_floor", 0.2))))
+        t = max(0.0, min(1.0, t))
+        alpha = alpha * (decay_floor + (1.0 - decay_floor) * t)
+
+    return max(0.0, min(1.0, alpha))
+
+
 def _blend_kv_at_indices(dst: Tensor, src: Tensor, token_indices, alpha: float) -> None:
     """In-place blend of KV tokens at selected indices: dst <- lerp(dst, src, alpha)."""
     if token_indices is None:
@@ -535,7 +556,6 @@ def _blend_kv_at_indices(dst: Tensor, src: Tensor, token_indices, alpha: float) 
         return
 
     dst[:, :, idx, ...] = torch.lerp(dst[:, :, idx, ...], src[:, :, idx, ...], alpha)
-
 
 
 
@@ -601,8 +621,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
-                kv_ref_alpha_k = info.get("kv_ref_alpha_k", 0.65)
-                kv_ref_alpha_v = info.get("kv_ref_alpha_v", 0.85)
+                kv_ref_alpha_k = _resolve_kv_blend_alpha(info, "kv_ref_alpha_k", 0.25)
+                kv_ref_alpha_v = _resolve_kv_blend_alpha(info, "kv_ref_alpha_v", 0.60)
                 _blend_kv_at_indices(source_img_k_s, source_img_k, mask_indices, kv_ref_alpha_k)
                 _blend_kv_at_indices(source_img_v_s, source_img_v, mask_indices, kv_ref_alpha_v)
         
@@ -724,8 +744,8 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 #source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 #source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
-                kv_ref_alpha_k = info.get("kv_ref_alpha_k", 0.65)
-                kv_ref_alpha_v = info.get("kv_ref_alpha_v", 0.85)
+                kv_ref_alpha_k = _resolve_kv_blend_alpha(info, "kv_ref_alpha_k", 0.25)
+                kv_ref_alpha_v = _resolve_kv_blend_alpha(info, "kv_ref_alpha_v", 0.60)
                 _blend_kv_at_indices(source_img_k_s, source_img_k, mask_indices, kv_ref_alpha_k)
                 _blend_kv_at_indices(source_img_v_s, source_img_v, mask_indices, kv_ref_alpha_v)
             else:
