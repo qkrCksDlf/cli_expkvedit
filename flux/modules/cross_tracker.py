@@ -37,7 +37,11 @@ class CrossAttentionTracker:
             )
             return
 
-        self.cross_attn_list.append(attn.detach().cpu())
+        try:
+            self.cross_attn_list.append(attn.detach().cpu())
+        except RuntimeError as e:
+            print(f"[Tracker] skip attention capture due to runtime error: {e}")
+            return
 
     def save_mask(self, t):
         # 모인 게 없으면 패스

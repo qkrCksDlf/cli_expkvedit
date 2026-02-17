@@ -139,7 +139,10 @@ class FluxEditor_CLI:
         
         # Ensure mask and image have same dimensions
         if mask_image.shape[:2] != init_image.shape[:2]:
-            mask_image = Image.fromarray(mask_image).resize((init_image.shape[1], init_image.shape[0]))
+            mask_image = Image.fromarray(mask_image).resize(
+                (init_image.shape[1], init_image.shape[0]),
+                Image.Resampling.NEAREST,
+            )
             mask_image = np.array(mask_image)
         
         # Adjust dimensions to be multiple of 16
@@ -150,8 +153,7 @@ class FluxEditor_CLI:
         mask_image = mask_image[:height, :width]
         
         # Normalize mask to 0-1 range
-        mask = mask_image.astype(float) / 255.0
-        mask = mask.astype(int)  # Convert to binary mask
+        mask = (mask_image >= 128).astype(np.float32)
         mask = torch.from_numpy(mask).unsqueeze(0).unsqueeze(0).to(torch.bfloat16).to(self.device[0])
         
         return init_image, mask, height, width
@@ -191,10 +193,10 @@ class FluxEditor_CLI:
         # Ensure same shape with image
         target_size = (init_image.shape[1], init_image.shape[0])  # (width, height)
         if mask1.shape[:2] != init_image.shape[:2]:
-            mask1 = Image.fromarray(mask1).resize(target_size)
+            mask1 = Image.fromarray(mask1).resize(target_size, Image.Resampling.NEAREST)
             mask1 = np.array(mask1)
         if mask2.shape[:2] != init_image.shape[:2]:
-            mask2 = Image.fromarray(mask2).resize(target_size)
+            mask2 = Image.fromarray(mask2).resize(target_size, Image.Resampling.NEAREST)
             mask2 = np.array(mask2)
     
         # Adjust dimensions to be multiple of 16
@@ -205,8 +207,8 @@ class FluxEditor_CLI:
         mask2 = mask2[:height, :width]
     
         # Convert to binary mask
-        mask1 = (mask1.astype(float) / 255.0).astype(int)
-        mask2 = (mask2.astype(float) / 255.0).astype(int)
+        mask1 = (mask1 >= 128).astype(np.float32)
+        mask2 = (mask2 >= 128).astype(np.float32)
     
         # Union
         union_mask = np.logical_or(mask1, mask2).astype(int)
@@ -312,7 +314,6 @@ class FluxEditor_CLI:
             inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
             # info['token_list'] = inp_target['token_list']
             print(inp_target['token_list'])
-            input()
             # info_r['token_list'] = inp_target['token_list']
             # inp_target.pop("token_list", None)
             # inp_target2.pop("token_list", None)
