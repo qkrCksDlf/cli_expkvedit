@@ -553,7 +553,7 @@ def main():
     parser.add_argument(
         "--skip_step", 
         type=int, 
-        default=4,
+        default=0,
         help="Number of steps to skip during editing (default: 4). Lower values = more faithful to target prompt but may affect background preservation"
     )
     parser.add_argument(
@@ -565,7 +565,7 @@ def main():
     parser.add_argument(
         "--denoise_guidance", 
         type=float, 
-        default=3.5,
+        default=1.5,
         help="Guidance scale for denoising process (default: 5.5). Higher values = stronger adherence to target prompt during editing"
     )
     parser.add_argument(
