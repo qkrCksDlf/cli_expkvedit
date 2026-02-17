@@ -576,7 +576,6 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             vaital_layers = [0,1,17,18,25,28,53,54,56]
             injected_from_reference = info['vital_c'] in vaital_layers
             if injected_from_reference :
-                print("KV주입!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
         
@@ -591,8 +590,7 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
             v = torch.cat((txt_v, source_img_v_s), dim=2)
 
             #attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
-            if injected_from_reference:
-                pe_no_injected = _remove_injected_latent_positional_embedding(pe, txt.shape[1], mask_indices)
+            pe_no_injected = _remove_injected_latent_positional_embedding(pe, txt.shape[1], mask_indices)
                 attn, attn_weights = attention(
                     q,
                     k,
@@ -602,16 +600,27 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                     attention_mask=info['attention_scale'],
                     return_weights=True,
                 )
-            else:
-                attn, attn_weights = attention(
-                    q,
-                    k,
-                    v,
-                    pe=pe,
-                    pe_q=info['pe_mask'],
-                    attention_mask=info['attention_scale'],
-                    return_weights=True,
-                )
+            # if injected_from_reference:
+            #     pe_no_injected = _remove_injected_latent_positional_embedding(pe, txt.shape[1], mask_indices)
+            #     attn, attn_weights = attention(
+            #         q,
+            #         k,
+            #         v,
+            #         pe=pe_no_injected,
+            #         pe_q=pe_no_injected,
+            #         attention_mask=info['attention_scale'],
+            #         return_weights=True,
+            #     )
+            # else:
+            #     attn, attn_weights = attention(
+            #         q,
+            #         k,
+            #         v,
+            #         pe=pe,
+            #         pe_q=info['pe_mask'],
+            #         attention_mask=info['attention_scale'],
+            #         return_weights=True,
+            #     )
     
             
 
@@ -708,8 +717,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             v = torch.cat((txt_v, source_img_v_s), dim=2)
             #attn, attn_weights = attention(q, k, v, pe=pe, pe_q = info['pe_mask'],attention_mask=info['attention_scale'], return_weights=True)
             injected_from_reference = info['vital_c'] in vaital_layers
-            if injected_from_reference:
-                pe_no_injected = _remove_injected_latent_positional_embedding(pe, txt_k.shape[2], mask_indices)
+            pe_no_injected = _remove_injected_latent_positional_embedding(pe, txt_k.shape[2], mask_indices)
                 attn, attn_weights = attention(
                     q,
                     k,
@@ -719,16 +727,27 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                     attention_mask=info['attention_scale'],
                     return_weights=True,
                     )
-            else:
-                attn, attn_weights = attention(
-                    q,
-                    k,
-                    v,
-                    pe=pe,
-                    pe_q=info['pe_mask'],
-                    attention_mask=info['attention_scale'],
-                    return_weights=True,
-                )
+            # if injected_from_reference:
+            #     pe_no_injected = _remove_injected_latent_positional_embedding(pe, txt_k.shape[2], mask_indices)
+            #     attn, attn_weights = attention(
+            #         q,
+            #         k,
+            #         v,
+            #         pe=pe_no_injected,
+            #         pe_q=pe_no_injected,
+            #         attention_mask=info['attention_scale'],
+            #         return_weights=True,
+            #         )
+            # else:
+            #     attn, attn_weights = attention(
+            #         q,
+            #         k,
+            #         v,
+            #         pe=pe,
+            #         pe_q=info['pe_mask'],
+            #         attention_mask=info['attention_scale'],
+            #         return_weights=True,
+            #     )
                 
             txt_len = 512
             img_len = source_img_k_s.shape[2]
