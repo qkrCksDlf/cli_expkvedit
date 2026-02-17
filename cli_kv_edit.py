@@ -285,7 +285,7 @@ class FluxEditor_CLI:
         return z0, zt, info
 
     @torch.inference_mode()
-    def edit(self, z0, zt, info, z0_r, zt_r, info_r, init_image, ref_image, mask, opts, union_mask):
+    def edit(self, z0, zt, info, z0_r, zt_r, info_r, init_image, ref_image, mask, opts):
         """
         Perform image editing using the inverted latents
         
@@ -319,40 +319,7 @@ class FluxEditor_CLI:
             inp_target = prepare(self.t5, self.clip, init_image, prompt=opts.target_prompt)
             inp_target2 = prepare(self.t5, self.clip, ref_image, prompt=opts.target_prompt)
             inp_target_s = prepare(self.t5, self.clip, init_image, prompt=opts.source_prompt)
-            # info['token_list'] = inp_target['token_list']
-            print(inp_target['token_list'])
 
-            # info_r['token_list'] = inp_target['token_list']
-            # inp_target.pop("token_list", None)
-            # inp_target2.pop("token_list", None)
-            # inp_target_s.pop("token_list", None)
-
-            # token_list 저장
-            token_list = inp_target["token_list"]
-            info["token_list"]   = token_list
-            info_r["token_list"] = token_list
-    
-            # 🐶 dog 토큰 인덱스 찾기
-            dog_token = "▁dog"
-            try:
-                dog_idx = token_list.index(dog_token)
-            except ValueError:
-                print(f"[Tracker] '{dog_token}' not found in token_list, tracker 비활성화")
-                dog_idx = None
-    
-            # tracker 만들기 (찾았을 때만)
-            if dog_idx is not None:
-                tracker = CrossAttentionTracker(
-                    token_idx=dog_idx,
-                    out_root="attn_token_masks",
-                    attn_id=info.get("id", "0"),
-                )
-                info["tracker"]      = tracker
-                info["track_cross"]  = True
-                info_r["tracker"]    = tracker  # 필요하면 ref 쪽도 공유
-                info_r["track_cross"]= True
-    
-            # 이제 denoise에 넘기기 전에 token_list는 지워줌 (모델 인자에 없으니까)
             inp_target.pop("token_list", None)
             inp_target2.pop("token_list", None)
             inp_target_s.pop("token_list", None)
@@ -361,9 +328,8 @@ class FluxEditor_CLI:
             # tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
             # info_r['tokenizer'] = tokenizer
             
-            x = self.model.denoise(z0.clone(),z0_r, zt, inp_target, union_mask, opts, info_r, info, union_mask,inp_target_s)
-            # 기존 : z0->소스, z0_r->레퍼런스, zt_r->레퍼런스, inp_target2->레퍼런스, mask->타겟*, opts, info->소스  
-            # qkv 실험 : z0->소스, z0_r->레퍼런스, zt->소스-, inp_target->소스-, mask->타겟*, opts, info->레퍼런스-
+            x = self.model.denoise(
+                    z0.clone(), z0_r, zt, inp_target, mask, opts, info_r, info, mask, inp_target_s)
             
         with torch.autocast(device_type=self.device[1].type, dtype=torch.bfloat16):
             x = self.ae.decode(x.to(self.device[1]))
@@ -440,16 +406,16 @@ class FluxEditor_CLI:
                 self.args.input_image, self.args.mask_image
             )
             
-            ref_image, mask2, height, width = self.load_and_prepare_images(
+            ref_image, ref_mask, height, width = self.load_and_prepare_images(
                 self.args.ref_image, self.args.ref_mask_image)
 
-            ref_image, mask3, height, width = self.load_and_prepare_images(
-                self.args.ref_image, self.args.ref_mask_image)
+            # ref_image, mask3, height, width = self.load_and_prepare_images(
+            #     self.args.ref_image, self.args.ref_mask_image)
 
-            #유니온 마스크가 필요하다면 사용. 아니면 주석처리
-            #추가 수정 필요 (불필요한 인자)
-            _, union_mask, _, _ = self.load_and_prepare_images_u(
-                self.args.input_image, self.args.mask_image, self.args.ref_mask_image)
+            # #유니온 마스크가 필요하다면 사용. 아니면 주석처리
+            # #추가 수정 필요 (불필요한 인자)
+            # _, union_mask, _, _ = self.load_and_prepare_images_u(
+            #     self.args.input_image, self.args.mask_image, self.args.ref_mask_image)
 
             #union_mask = mask3
             # Override width/height if specified
@@ -484,17 +450,20 @@ class FluxEditor_CLI:
             encoded_image2 = self.encode(ref_image, self.device[1]).to(self.device[0])
             
             # Perform inversion
-            z0, zt, info = self.inverse(encoded_image, union_mask if opts.attn_mask else None, opts)
-            info["save_attn"] = True
-            info["q_token"] = "▁dog"
-            z0_r, zt_r, info_r = self.inverse(encoded_image2, union_mask if opts.attn_mask else None, opts, False)
-            info_r["save_attn"] = True
-            info_r["q_token"] = "▁dog"
+            # z0, zt, info = self.inverse(encoded_image, union_mask if opts.attn_mask else None, opts)
+            # info["save_attn"] = True
+            # info["q_token"] = "▁dog"
+            # z0_r, zt_r, info_r = self.inverse(encoded_image2, union_mask if opts.attn_mask else None, opts, False)
+            # info_r["save_attn"] = True
+            # info_r["q_token"] = "▁dog"
+            z0, zt, info = self.inverse(encoded_image, mask if opts.attn_mask else None, opts)
+            z0_r, zt_r, info_r = self.inverse(encoded_image2, ref_mask if opts.attn_mask else None, opts, False)
 
             
             # Perform editing -> mask는 소스/레퍼런스/union 선택.
-            edited_image = self.edit(z0, zt, info, z0_r, zt_r, info_r, encoded_image, encoded_image2, union_mask, opts, union_mask)
-    
+            #edited_image = self.edit(z0, zt, info, z0_r, zt_r, info_r, encoded_image, encoded_image2, union_mask, opts, union_mask)
+            edited_image = self.edit(z0, zt, info, z0_r, zt_r, info_r, encoded_image, encoded_image2, mask, opts)
+            
             output_path = self.save_result(edited_image, opts, self.args.mask_image)
 
             print(f"\n✅ Editing completed successfully!")
