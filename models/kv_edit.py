@@ -83,8 +83,10 @@ class Flux_kv_edit_inf(only_Flux):
         bs, L, d = inp["img"].shape
         h = opts.height // 8
         w = opts.width // 8
-        mask = F.interpolate(mask, size=(h,w), mode='bilinear', align_corners=False)
-        mask[mask > 0] = 1
+        # mask = F.interpolate(mask, size=(h,w), mode='bilinear', align_corners=False)
+        # mask[mask > 0] = 1
+        mask = F.interpolate(mask, size=(h,w), mode='nearest')
+        mask = (mask > 0.5).to(mask.dtype)
         
         mask = repeat(mask, 'b c h w -> b (repeat c) h w', repeat=16)
         mask = rearrange(mask, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
@@ -104,7 +106,8 @@ class Flux_kv_edit_inf(only_Flux):
             attention_scale = None
         info['attention_scale'] = attention_scale
         
-        denoise_timesteps = get_schedule(opts.denoise_num_steps, inp["img"].shape[1], shift=(self.name != "flux-schnell"))
+        #denoise_timesteps = get_schedule(opts.denoise_num_steps, inp["img"].shape[1], shift=(self.name != "flux-schnell"))
+        denoise_timesteps = get_schedule(opts.inversion_num_steps, inp["img"].shape[1], shift=(self.name != "flux-schnell"))
         denoise_timesteps = denoise_timesteps[opts.skip_step:]
         
     
@@ -186,10 +189,14 @@ class Flux_kv_edit(only_Flux):
         h = opts.height // 8
         w = opts.width // 8
         L = h * w // 4 
-        mask = F.interpolate(mask, size=(h,w), mode='bilinear', align_corners=False)
-        union_mask = F.interpolate(union_mask, size=(h,w), mode='bilinear', align_corners=False) #추가
-        mask[mask > 0] = 1
-        union_mask[union_mask > 0] = 1 #추가
+        # mask = F.interpolate(mask, size=(h,w), mode='bilinear', align_corners=False)
+        # union_mask = F.interpolate(union_mask, size=(h,w), mode='bilinear', align_corners=False) #추가
+        # mask[mask > 0] = 1
+        # union_mask[union_mask > 0] = 1 #추가
+        mask = F.interpolate(mask, size=(h,w), mode='nearest')
+        union_mask = F.interpolate(union_mask, size=(h,w), mode='nearest') #추가
+        mask = (mask > 0.5).to(mask.dtype)
+        union_mask = (union_mask > 0.5).to(union_mask.dtype) #추가
         
         mask = repeat(mask, 'b c h w -> b (repeat c) h w', repeat=16)
         union_mask = repeat(union_mask, 'b c h w -> b (repeat c) h w', repeat=16) #추가
