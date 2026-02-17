@@ -541,19 +541,19 @@ def main():
     parser.add_argument(
         "--inversion_num_steps", 
         type=int, 
-        default=40,
+        default=28,
         help="Number of steps for DDIM inversion (default: 28). Higher values = more accurate inversion but slower"
     )
     parser.add_argument(
         "--denoise_num_steps", 
         type=int, 
-        default=40,
+        default=28,
         help="Number of steps for denoising process (default: 28). Higher values = better quality but slower"
     )
     parser.add_argument(
         "--skip_step", 
         type=int, 
-        default=3,
+        default=4,
         help="Number of steps to skip during editing (default: 4). Lower values = more faithful to target prompt but may affect background preservation"
     )
     parser.add_argument(
