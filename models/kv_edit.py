@@ -194,10 +194,12 @@ class Flux_kv_edit(only_Flux):
         # union_mask = F.interpolate(union_mask, size=(h,w), mode='bilinear', align_corners=False) #추가
         # mask[mask > 0] = 1
         # union_mask[union_mask > 0] = 1 #추가
-        mask = F.interpolate(mask, size=(h,w), mode='nearest')
-        union_mask = F.interpolate(union_mask, size=(h,w), mode='nearest') #추가
-        mask = (mask > 0.5).to(mask.dtype)
-        union_mask = (union_mask > 0.5).to(union_mask.dtype) #추가
+        # mask = F.interpolate(mask, size=(h,w), mode='nearest')
+        # union_mask = F.interpolate(union_mask, size=(h,w), mode='nearest') #추가
+        # mask = (mask > 0.5).to(mask.dtype)
+        # union_mask = (union_mask > 0.5).to(union_mask.dtype) #추가
+        mask = F.interpolate(mask, size=(h,w), mode='bilinear', align_corners=False).clamp(0, 1)
+        union_mask = F.interpolate(union_mask, size=(h,w), mode='bilinear', align_corners=False).clamp(0, 1) #추가
         
         mask = repeat(mask, 'b c h w -> b (repeat c) h w', repeat=16)
         union_mask = repeat(union_mask, 'b c h w -> b (repeat c) h w', repeat=16) #추가
