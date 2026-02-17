@@ -151,8 +151,9 @@ class Flux_kv_edit(only_Flux):
         
 
         if opts.attn_mask:
-            mask = F.interpolate(mask, size=(h,w), mode='bilinear', align_corners=False)
-            mask[mask > 0] = 1
+            # mask = F.interpolate(mask, size=(h,w), mode='bilinear', align_corners=False)
+            # mask[mask > 0] = 1
+            mask = F.interpolate(mask, size=(h,w), mode='bilinear', align_corners=False).clamp(0, 1)
             
             mask = repeat(mask, 'b c h w -> b (repeat c) h w', repeat=16)
             mask = rearrange(mask, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
