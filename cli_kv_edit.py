@@ -596,7 +596,7 @@ def main():
     parser.add_argument(
         "--denoise_guidance", 
         type=float, 
-        default=3,
+        default=3.5,
         help="Guidance scale for denoising process (default: 5.5). Higher values = stronger adherence to target prompt during editing"
     )
     parser.add_argument(
