@@ -22,10 +22,15 @@ class only_Flux(torch.nn.Module):
 
         text_indices = torch.arange(0, text_len, device=device)
 
-        mask_token_indices = torch.tensor([idx + text_len for idx in mask_indices], device=device)
+        #mask_token_indices = torch.tensor([idx + text_len for idx in mask_indices], device=device)
+        mask_token_indices = mask_indices.to(device=device, dtype=torch.long) + text_len
 
         all_indices = torch.arange(text_len, seq_len, device=device)
-        background_token_indices = torch.tensor([idx for idx in all_indices if idx not in mask_token_indices])
+        #background_token_indices = torch.tensor([idx for idx in all_indices if idx not in mask_token_indices])
+        background_selector = torch.ones(seq_len - text_len, dtype=torch.bool, device=device)
+        if mask_token_indices.numel() > 0:
+            background_selector[mask_token_indices - text_len] = False
+        background_token_indices = all_indices[background_selector]
 
         # text setting
         attention_mask[text_indices.unsqueeze(1).expand(-1, seq_len)] = True
@@ -52,10 +57,15 @@ class only_Flux(torch.nn.Module):
 
         text_indices = torch.arange(0, text_len, device=device)
         
-        mask_token_indices = torch.tensor([idx + text_len for idx in mask_indices], device=device)
+        #mask_token_indices = torch.tensor([idx + text_len for idx in mask_indices], device=device)
+        mask_token_indices = mask_indices.to(device=device, dtype=torch.long) + text_len
 
         all_indices = torch.arange(text_len, seq_len, device=device)
-        background_token_indices = torch.tensor([idx for idx in all_indices if idx not in mask_token_indices])
+        #background_token_indices = torch.tensor([idx for idx in all_indices if idx not in mask_token_indices])
+        background_selector = torch.ones(seq_len - text_len, dtype=torch.bool, device=device)
+        if mask_token_indices.numel() > 0:
+            background_selector[mask_token_indices - text_len] = False
+        background_token_indices = all_indices[background_selector]
         
         attention_scale[0, background_token_indices] = scale #
         
@@ -96,8 +106,7 @@ class Flux_kv_edit_inf(only_Flux):
         
         denoise_timesteps = get_schedule(opts.denoise_num_steps, inp["img"].shape[1], shift=(self.name != "flux-schnell"))
         denoise_timesteps = denoise_timesteps[opts.skip_step:]
-        print(denoise_timesteps)
-        input()
+        
     
         z0 = inp["img"]
 
@@ -124,7 +133,8 @@ class Flux_kv_edit(only_Flux):
     def forward(self,inp,inp_ref,mask:Tensor,opts):
         z0,zt,info = self.inverse(inp,mask,opts)
         z0_r,zt_r,info_r = self.inverse(inp_ref,mask,opts)
-        z0 = self.denoise(z0,z0_r,zt_r,inp_ref,mask,opts,info)
+        #z0 = self.denoise(z0,z0_r,zt_r,inp_ref,mask,opts,info)
+        z0 = self.denoise(z0, z0_r, zt_r, inp_ref, mask, opts, info, info_r, mask, inp_ref)
         return z0
     @torch.inference_mode()
     def inverse(self,inp,mask,opts):
