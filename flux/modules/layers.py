@@ -581,10 +581,8 @@ class DoubleStreamBlock_kv(DoubleStreamBlock):
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
         
             else:
-                #source_img_k_s[:, :, mask_indices, ...] = img_k
-                #source_img_v_s[:, :, mask_indices, ...] = img_v
-                source_img_k_s[:, :, mask_indices, ...] = img_k[:, :, mask_indices, ...]
-                source_img_v_s[:, :, mask_indices, ...] = img_v[:, :, mask_indices, ...]
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
 
 
                 
@@ -660,16 +658,11 @@ class SingleStreamBlock_kv(SingleStreamBlock):
 
         q, k, v = rearrange(qkv, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
         q, k = self.norm(q, k, v)
-        #img_k = k[:, :, 512:, ...]
-        #img_v = v[:, :, 512:, ...]
-        txt_len = x.shape[1] - zt_r.shape[1]
-        img_k = k[:, :, txt_len:, ...]
-        img_v = v[:, :, txt_len:, ...]
+        img_k = k[:, :, 512:, ...]
+        img_v = v[:, :, 512:, ...]
         
-        #txt_k = k[:, :, :512, ...]
-        #txt_v = v[:, :, :512, ...]
-        txt_k = k[:, :, :txt_len, ...]
-        txt_v = v[:, :, :txt_len, ...]
+        txt_k = k[:, :, :512, ...]
+        txt_v = v[:, :, :512, ...]
     
 
         feature_k_name = str(info['t']) + '_' + str(info['id']) + '_' + 'SB' + '_' + 'K'
@@ -687,8 +680,8 @@ class SingleStreamBlock_kv(SingleStreamBlock):
             
         else:
 
-            #feature_keys = list(info['feature'].keys())
-            #feature_k_index = feature_keys.index(feature_k_name)
+            feature_keys = list(info['feature'].keys())
+            feature_k_index = feature_keys.index(feature_k_name)
             
             
             source_img_k = info['feature'][feature_k_name].to(x.device) #레퍼런스
@@ -706,10 +699,8 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                 source_img_k_s[:, :, mask_indices, ...] = source_img_k[:, :, mask_indices, ...]
                 source_img_v_s[:, :, mask_indices, ...] = source_img_v[:, :, mask_indices, ...]
             else:
-                #source_img_k_s[:, :, mask_indices, ...] = img_k
-                #source_img_v_s[:, :, mask_indices, ...] = img_v
-                source_img_k_s[:, :, mask_indices, ...] = img_k[:, :, mask_indices, ...]
-                source_img_v_s[:, :, mask_indices, ...] = img_v[:, :, mask_indices, ...]
+                source_img_k_s[:, :, mask_indices, ...] = img_k
+                source_img_v_s[:, :, mask_indices, ...] = img_v
                 
             
             
@@ -739,7 +730,7 @@ class SingleStreamBlock_kv(SingleStreamBlock):
                     return_weights=True,
                 )
                 
-            #txt_len = 512
+            txt_len = 512
             img_len = source_img_k_s.shape[2]
             attn_text_to_img = attn_weights[:, :, :txt_len, txt_len:txt_len+img_len]
             if info.get("track_cross", False):
