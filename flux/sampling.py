@@ -207,10 +207,15 @@ def denoise_kv(
         img_name = str(info['t']) + '_' + 'img'
         mask_indices = info['mask_indices']
         
-        tar_img = info['feature'][img_name].to(img.device)
-        zt_r2= tar_img[:, mask_indices,...]
-        zt_r = tar_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + zt_r2 * info['mask'][:, info['mask_indices'],...]
-        
+        # tar_img = info['feature'][img_name].to(img.device)
+        # zt_r2= tar_img[:, mask_indices,...]
+        # zt_r = tar_img[:, info['mask_indices'],...] * (1 - info['mask'][:, info['mask_indices'],...]) + zt_r2 * info['mask'][:, info['mask_indices'],...]
+        source_latent = info['feature'][img_name].to(img.device)
+        ref_latent = zt_r.to(img.device)
+        zt_r = (
+            source_latent[:, mask_indices, ...] * (1 - info['mask'][:, mask_indices, ...])
+            + ref_latent[:, mask_indices, ...] * info['mask'][:, mask_indices, ...]
+        )
         
     
     for i, (t_curr, t_prev) in enumerate(tzip(timesteps[:-1], timesteps[1:])):
