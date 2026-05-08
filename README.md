@@ -54,20 +54,23 @@ In this research, I studied diffusion-based editing methods and explored attenti
 
 ---
 
-## Research Topics
 
-The research mainly focused on the following topics:
+## Research Direction
 
-- Subject-driven image editing
-- Object insertion and replacement
-- Identity preservation
-- Attention manipulation in diffusion models
-- Key / Value feature injection
-- Mask-guided image editing
-- Inversion-based editing
-- Diffusion feature analysis
+I selected **KV-Edit(ICCV 2025)** as the base model for this research because I believed it could effectively preserve the surrounding background during image editing.
 
----
+Background preservation is an important challenge in subject-driven image editing, since the model must edit only the desired region while keeping the rest of the image visually consistent.
+
+However, KV-Edit is fundamentally a generation model, and it cannot directly perform reference-image-based image editing. In other words, it has limitations in understanding a given reference image and using it to preserve the subject's identity during the editing process.
+
+To address this limitation, I conducted research on extending the KV-Edit framework so that it could better understand reference images, preserve subject identity, and generate edited images that also follow the given text condition.
+
+The main goal of this research was to explore how a generative editing model can incorporate reference-image information while maintaining both identity preservation and background consistency.
+
+
+
+
+
 
 ## Papers and Methods Reviewed
 
