@@ -28,31 +28,17 @@ The main focus of this work was to explore how to preserve the identity of a ref
 
 ---
 
-## Motivation
+## Motivation & Research Background
 
 Subject-driven image editing is a promising technology with practical applications in various industries, including virtual try-on, interior design, product placement, and personalized content creation.
 
-I became interested in this field because it can provide real user value while involving challenging research problems such as identity preservation, natural object insertion, and background consistency.
+I became interested in this field because it can provide real user value while involving challenging research problems such as reference identity preservation, natural object insertion, background consistency, and edit controllability.
 
-Based on this motivation, I conducted undergraduate research on diffusion-based subject-driven image editing, focusing on attention analysis and feature-level manipulation.
+At the beginning of my research in early 2025, I first investigated how recent subject-driven image editing and reference-based generation methods performed in practice. I reviewed and tested several related methods, including **AnyDoor**, **Tuning-Free Image Customization with Image and Text Guidance (ECCV 2024)**, **SISO**, **InstantSwap**, and **MasaCtrl**.
 
----
+Through this process, I observed that many existing methods could edit or insert the target subject to some extent, but they often caused unintended changes in regions that should have remained unchanged. In particular, preserving the surrounding background and layout while modifying only the desired subject region was still a challenging problem.
 
-
-## Overview
-
-Subject-driven image editing aims to modify an image using a reference subject while maintaining both the subject identity and the visual consistency of the target image.
-
-This task is challenging because the model needs to preserve:
-
-- the identity of the reference subject
-- the background and layout of the target image
-- spatial consistency between the edited region and the original image
-- realistic image quality after generation
-
-In this research, I studied diffusion-based editing methods and explored attention / feature-level manipulation strategies for identity-preserving image editing.
-
----
+Based on these observations, I focused my undergraduate research on diffusion-based subject-driven image editing, especially on attention analysis and feature-level manipulation for improving identity preservation and background consistency.
 
 
 ## Research Direction
@@ -70,49 +56,16 @@ The main goal of this research was to explore how a generative editing model can
 
 
 
-
-
-## Papers and Methods Reviewed
-
-I studied and analyzed several recent methods related to subject-driven image editing and reference-based generation.
-
-- AnyDoor
-- SISO
-- KV-Edit
-- Stable Flow
-- CannyEdit
-- Teleportraits
-- FLUX / DiT-based editing approaches
-
-The main goal of the paper review was to understand how each method handles reference conditioning, identity preservation, background consistency, and editing controllability.
-
 ---
 
-## My Work
+### 1. KV-Edit-based Feature Injection
 
-### 1. Paper Review and Method Analysis
+To enable reference-based editing in the generative KV-Edit model, I investigated feature injection strategies for better identity preservation:
 
-I reviewed recent papers on subject-driven image editing and compared their core approaches.
+Goal: Enable the model to understand reference subjects while following text conditions.
 
-The analysis focused on:
+Method: Conducted initial experiments by injecting reference Key/Value features into all timesteps and attention layers of the generation process.
 
-- how reference subject information is injected
-- how masks are used for local editing
-- how attention maps affect object localization
-- how inversion is used for image reconstruction and editing
-- how identity preservation and background consistency are balanced
-
----
-
-### 2. KV-Edit-based Feature Injection Exploration
-
-I explored KV-Edit-based feature injection for identity-preserving image editing.
-
-The main idea was to reuse Key / Value features extracted from a reference subject and inject them into selected attention layers or regions during the editing process.
-
-This experiment was motivated by the question:
-
-> Can reference object identity be better preserved by injecting reference-side attention features into the target editing region?
 
 ---
 
