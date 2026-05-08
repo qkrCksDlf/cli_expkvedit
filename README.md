@@ -84,13 +84,13 @@ Vital Layers = [0,1,2,17,18,25,28,53,54,56]
 
 ---
 
-### 3. Diffusion Feature and Object-level Analysis
+### 3. Removing RoPE (Rotational Position Embedding) in FLUX
+I experimented with removing the RoPE (Rotational Position Embedding) from the FLUX model, an approach inspired by the CharaConsist paper.
 
-I also explored how diffusion model features represent object-level information.
+In the standard FLUX architecture, the positional embeddings tend to bias the attention mechanism toward spatial correspondence rather than semantic relevance. By removing RoPE, I aimed to break this rigid spatial dependency, allowing the model to perform more flexible, content-aware attention for better subject integration.
 
-One direction was to use clustering-based analysis on diffusion features to check whether object regions could be separated in a bottom-up manner.
 
-This was considered as a possible way to refine masks or identify object-related regions without relying only on text attention.
+
 
 ---
 
