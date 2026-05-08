@@ -22,7 +22,7 @@ The main focus of this work was to explore how to preserve the identity of a ref
 ## Research Experience
 
 - **Position:** Undergraduate Research Student
-- **Lab:** Multimodal AI Lab
+- **Lab:** Multimodal AI Lab (Inha University)
 - **Duration:** 1 year and 4 months
 - **Research Area:** Subject-driven image editing, diffusion-based generative models, attention / feature-level image editing
 
