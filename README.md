@@ -27,6 +27,18 @@ The main focus of this work was to explore how to preserve the identity of a ref
 - **Research Area:** Subject-driven image editing, diffusion-based generative models, attention / feature-level image editing
 
 ---
+
+## Motivation
+
+Subject-driven image editing is a promising technology with practical applications in various industries, including virtual try-on, interior design, product placement, and personalized content creation.
+
+I became interested in this field because it can provide real user value while involving challenging research problems such as identity preservation, natural object insertion, and background consistency.
+
+Based on this motivation, I conducted undergraduate research on diffusion-based subject-driven image editing, focusing on attention analysis and feature-level manipulation.
+
+---
+
+
 ## Overview
 
 Subject-driven image editing aims to modify an image using a reference subject while maintaining both the subject identity and the visual consistency of the target image.
