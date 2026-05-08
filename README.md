@@ -71,21 +71,20 @@ Method: Conducted initial experiments by injecting reference Key/Value features 
 
 ---
 
-### 3. Attention Map Visualization
+### 2. Feature Injection into Vital Layers
 
-I visualized token-level attention maps to analyze whether object-related text tokens were properly localized in the generated image.
+Following the initial experiments, I conducted further research by injecting Key and Value features only into "Vital Layers" instead of all layers.
 
-This helped inspect failure cases where the model did not correctly attend to the intended object region.
+This approach was inspired by the Stable Flow paper.
 
-Example visualization:
+Vital Layers = [0,1,2,17,18,25,28,53,54,56]
 
-| Input Image | Attention Map |
-|---|---|
-| ![](./assets/input_example.png) | ![](./assets/attention_map_example.png) |
+
+
 
 ---
 
-### 4. Diffusion Feature and Object-level Analysis
+### 3. Diffusion Feature and Object-level Analysis
 
 I also explored how diffusion model features represent object-level information.
 
