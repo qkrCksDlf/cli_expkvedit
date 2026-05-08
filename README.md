@@ -9,78 +9,183 @@ python cli_kv_edit.py \
     --re_init
 ```
 
+# Subject-driven Image Editing Research
 
-```
-python cli_kv_edit.py \
-    --input_image "x1.jpg" \
-    --mask_image "x4.jpg" \
-    --ref_image "x3.png" \
-    --ref_mask_image "x4.jpg" \
-    --source_prompt "a cat is lying on the floor" \
-    --target_prompt "a dog is lying on the floor" \
-    --re_init
-```
+This repository summarizes my undergraduate research experience on **subject-driven image editing** using diffusion-based generative models.
 
-```
-python cli_kv_edit.py \
-    --input_image "simg_00.jpg" \
-    --mask_image "simg_00_mask.png" \
-    --ref_image "k.jpg" \
-    --ref_mask_image "k_mask.jpg" \
-    --source_prompt "a cat is on a pink bed" \
-    --target_prompt "a husky toy on a pink bed " \
-    --re_init
-```
+The main focus of this work was to explore how to preserve the identity of a reference subject while naturally editing or inserting it into a target image.
 
-```
-python demo_lore.py --resize -1 \
-                    --source_prompt "a cat is lying on the floor" \
-                    --target_prompt "a dog is lying on the floor" \
-                    --target_object "dog" \
-                    --target_index 5 \
-                    --ref_img_dir '../../../cli_expkvedit/x3.png'  \
-                    --source_img_dir '../../../cli_expkvedit/x1.jpg' \
-                    --source_mask_dir '../../../cli_expkvedit/x4.jpg'  \
-                    --seeds 3 \
-                    --training_epochs 0 \
-                    --savename 'floor' \
-                    --v_inject 2
-```
+> This repository was originally started as an experimental workspace for KV-Edit-based feature injection experiments.
 
-```
-python demo_lore.py --resize -1 \
-                    --source_prompt "a bag is on the floor" \
-                    --target_prompt "a dog is on the floor" \
-                    --target_object "dog" \
-                    --target_index 5 \
-                    --source_img_dir '../../cli_expkvedit/003.jpg' \
-                    --source_mask_dir '../../cli_expkvedit/ref_mask3.jpg'  \
-                    --seeds 3 \
-                    --savename 'floor'
-```
+---
 
-```
-python demo_lore.py --resize -1 \
-                    --source_prompt "a cat is lying on the floor" \
-                    --target_prompt "a dog is lying on the floor" \
-                    --target_object "dog" \
-                    --target_index 2 \
-                    --source_img_dir '../../cli_expkvedit/x1.jpg' \
-                    --source_mask_dir '../../cli_expkvedit/x4.jpg'  \
-                    --num_steps 10 \
-                    --inject 12 \
-                    --noise_scale 1 \
-                    --training_epochs 1 \
-                    --seeds 0 \
-                    --savename 'lying'
-```
+## Overview
 
+Subject-driven image editing aims to modify an image using a reference subject while maintaining both the subject identity and the visual consistency of the target image.
 
-```
-python cli_kv_edit.py \
-    --input_image "../../cli_expkvedit/x1.jpg" \
-    --mask_image "../../cli_expkvedit/x4.jpg" \
-    --source_prompt "a cat is lying on the floor" \
-    --target_prompt "a dog is lying on the floor" \
-    --denoise_guidance 1.5
-```
+This task is challenging because the model needs to preserve:
+
+- the identity of the reference subject
+- the background and layout of the target image
+- spatial consistency between the edited region and the original image
+- realistic image quality after generation
+
+In this research, I studied diffusion-based editing methods and explored attention / feature-level manipulation strategies for identity-preserving image editing.
+
+---
+
+## Research Topics
+
+The research mainly focused on the following topics:
+
+- Subject-driven image editing
+- Object insertion and replacement
+- Identity preservation
+- Attention manipulation in diffusion models
+- Key / Value feature injection
+- Mask-guided image editing
+- Inversion-based editing
+- Diffusion feature analysis
+
+---
+
+## Papers and Methods Reviewed
+
+I studied and analyzed several recent methods related to subject-driven image editing and reference-based generation.
+
+- AnyDoor
+- SISO
+- KV-Edit
+- Stable Flow
+- CannyEdit
+- Teleportraits
+- FLUX / DiT-based editing approaches
+
+The main goal of the paper review was to understand how each method handles reference conditioning, identity preservation, background consistency, and editing controllability.
+
+---
+
+## My Work
+
+### 1. Paper Review and Method Analysis
+
+I reviewed recent papers on subject-driven image editing and compared their core approaches.
+
+The analysis focused on:
+
+- how reference subject information is injected
+- how masks are used for local editing
+- how attention maps affect object localization
+- how inversion is used for image reconstruction and editing
+- how identity preservation and background consistency are balanced
+
+---
+
+### 2. KV-Edit-based Feature Injection Exploration
+
+I explored KV-Edit-based feature injection for identity-preserving image editing.
+
+The main idea was to reuse Key / Value features extracted from a reference subject and inject them into selected attention layers or regions during the editing process.
+
+This experiment was motivated by the question:
+
+> Can reference object identity be better preserved by injecting reference-side attention features into the target editing region?
+
+---
+
+### 3. Attention Map Visualization
+
+I visualized token-level attention maps to analyze whether object-related text tokens were properly localized in the generated image.
+
+This helped inspect failure cases where the model did not correctly attend to the intended object region.
+
+Example visualization:
+
+| Input Image | Attention Map |
+|---|---|
+| ![](./assets/input_example.png) | ![](./assets/attention_map_example.png) |
+
+---
+
+### 4. Diffusion Feature and Object-level Analysis
+
+I also explored how diffusion model features represent object-level information.
+
+One direction was to use clustering-based analysis on diffusion features to check whether object regions could be separated in a bottom-up manner.
+
+This was considered as a possible way to refine masks or identify object-related regions without relying only on text attention.
+
+---
+
+## Experiment Results
+
+Add your experiment results here.
+
+### Object Editing Example
+
+| Reference Subject | Target Image | Edited Result |
+|---|---|---|
+| ![](./assets/reference.png) | ![](./assets/target.png) | ![](./assets/result.png) |
+
+### Attention Visualization Example
+
+| Prompt Token | Attention Map |
+|---|---|
+| `dog` | ![](./assets/dog_attention.png) |
+
+---
+
+## Lab Meeting Feedback and Future Directions
+
+Based on lab meeting discussions, I organized several possible future directions:
+
+- Combining Stable Diffusion features with DINO features
+- Using diffusion feature clustering for object region refinement
+- Comparing single-image and two-image subject swapping frameworks
+- Exploring frequency-domain manipulation for preserving high-frequency details
+- Investigating inversion-based editing for real image manipulation
+- Selecting effective layers for attention or feature injection
+- Designing proper baselines for identity preservation evaluation
+
+---
+
+## Key Takeaways
+
+Through this research experience, I learned how to:
+
+- read and analyze recent generative AI papers
+- understand diffusion-based image editing pipelines
+- inspect attention and feature representations inside diffusion models
+- modify model components for feature-level experiments
+- use visualization to debug model behavior
+- convert broad research ideas into concrete experiment plans
+
+---
+
+## Tech Stack
+
+- Python
+- PyTorch
+- Diffusers
+- Stable Diffusion
+- FLUX / DiT-based architectures
+- Attention visualization
+- Image editing pipelines
+
+---
+
+## Repository Structure
+
+```text
+subject-driven-image-editing/
+├── README.md
+├── assets/
+│   ├── input_example.png
+│   ├── attention_map_example.png
+│   ├── reference.png
+│   ├── target.png
+│   └── result.png
+├── notes/
+│   └── paper_summary.md
+└── experiments/
+    └── kv_feature_injection/
