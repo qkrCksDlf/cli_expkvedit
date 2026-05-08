@@ -19,6 +19,14 @@ The main focus of this work was to explore how to preserve the identity of a ref
 
 ---
 
+## Research Experience
+
+- **Position:** Undergraduate Research Student
+- **Lab:** Multimodal AI Lab
+- **Duration:** 1 year and 4 months
+- **Research Area:** Subject-driven image editing, diffusion-based generative models, attention / feature-level image editing
+
+---
 ## Overview
 
 Subject-driven image editing aims to modify an image using a reference subject while maintaining both the subject identity and the visual consistency of the target image.
