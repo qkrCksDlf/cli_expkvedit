@@ -67,6 +67,8 @@ Goal: Enable the model to understand reference subjects while following text con
 Method: Conducted initial experiments by injecting reference Key/Value features into all timesteps and attention layers of the generation process.
 
 
+![KV-Edit Result](./assets/no1_exp_iamge1.jpg)
+
 ---
 
 ### 3. Attention Map Visualization
