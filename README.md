@@ -95,7 +95,9 @@ One possible reason for the limited performance improvement is that the base KV-
 In future work, using an inpainting-oriented model such as FLUX Fill could be a more suitable direction, as it is better aligned with masked-region editing and background-preserving generation.
 
 ### Reflection
-이 프로젝트를 통해 단순히 pre-trained 모델을 사용하는 것을 넘어, 모델 내부 구조를 코드 레벨에서 분석하고 가설을 세워 검증하는 연구 사이클을 직접 경험했다. KV-Edit의 코드를 분해하고, 어텐션 맵으로 원인을 추적하고, 관련 논문을 탐색해 구조 수정으로 이어지는 사이클은, 향후 어떤 AI 모델을 만나도 빠르게 구조를 파악하고 개선점을 찾아낼 수 있는 자산이 되었다.
+Through this project, I experienced the full research cycle of analyzing a model’s internal structure at the code level, forming hypotheses, modifying the implementation, and validating the results, rather than simply using a pre-trained model.
+
+By studying the KV-Edit codebase, tracing failure cases through attention map visualization, reviewing related papers, and connecting those insights to architectural modifications, I developed practical research skills that can help me quickly understand and improve new AI models in future projects.
 
 ### Usage
 ```
