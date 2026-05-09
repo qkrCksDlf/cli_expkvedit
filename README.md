@@ -96,7 +96,17 @@ In the standard FLUX architecture, the positional embeddings tend to bias the at
 
 ---
 
-In addition, I tried several other approaches, such as editing with a union mask, injecting K and V features into early and late layers, and editing using Zero123, but they did not improve performance..
+In addition, I tried several other approaches, such as editing with a union mask, injecting K and V features into early and late layers, visualizing attention maps, and editing using Zero123, but they did not improve performance..
 
 ---
 
+### 
+One possible reason for the limited performance improvement is that the base KV-Edit framework was not specifically designed for masked reference-based image editing. Since it does not explicitly learn how to use a reference image to fill or modify a masked region, direct K/V feature injection may be insufficient for stable subject transfer.
+
+In future work, using an inpainting-oriented model such as FLUX Fill could be a more suitable direction, as it is better aligned with masked-region editing and background-preserving generation.
+
+### Reflection
+이 프로젝트를 통해 단순히 pre-trained 모델을 사용하는 것을 넘어, 모델 내부 구조를 코드 레벨에서 분석하고 가설을 세워 검증하는 연구 사이클을 직접 경험했다. KV-Edit의 코드를 분해하고, 어텐션 맵으로 원인을 추적하고, 관련 논문을 탐색해 구조 수정으로 이어지는 사이클은, 향후 어떤 AI 모델을 만나도 빠르게 구조를 파악하고 개선점을 찾아낼 수 있는 자산이 되었다.
+
+---
+This experiment was conducted using a single A40 GPU.
