@@ -91,78 +91,9 @@ In the standard FLUX architecture, the positional embeddings tend to bias the at
 
 ![KV-Edit Result3](./assets/no2_exp_image2.jpg)
 
+---
+
+In addition, I tried several other approaches, such as editing with a union mask, injecting K and V features into early and late layers, and editing using Zero123, but they did not improve performance..
 
 ---
 
-## Experiment Results
-
-Add your experiment results here.
-
-### Object Editing Example
-
-| Reference Subject | Target Image | Edited Result |
-|---|---|---|
-| ![](./assets/reference.png) | ![](./assets/target.png) | ![](./assets/result.png) |
-
-### Attention Visualization Example
-
-| Prompt Token | Attention Map |
-|---|---|
-| `dog` | ![](./assets/dog_attention.png) |
-
----
-
-## Lab Meeting Feedback and Future Directions
-
-Based on lab meeting discussions, I organized several possible future directions:
-
-- Combining Stable Diffusion features with DINO features
-- Using diffusion feature clustering for object region refinement
-- Comparing single-image and two-image subject swapping frameworks
-- Exploring frequency-domain manipulation for preserving high-frequency details
-- Investigating inversion-based editing for real image manipulation
-- Selecting effective layers for attention or feature injection
-- Designing proper baselines for identity preservation evaluation
-
----
-
-## Key Takeaways
-
-Through this research experience, I learned how to:
-
-- read and analyze recent generative AI papers
-- understand diffusion-based image editing pipelines
-- inspect attention and feature representations inside diffusion models
-- modify model components for feature-level experiments
-- use visualization to debug model behavior
-- convert broad research ideas into concrete experiment plans
-
----
-
-## Tech Stack
-
-- Python
-- PyTorch
-- Diffusers
-- Stable Diffusion
-- FLUX / DiT-based architectures
-- Attention visualization
-- Image editing pipelines
-
----
-
-## Repository Structure
-
-```text
-subject-driven-image-editing/
-├── README.md
-├── assets/
-│   ├── input_example.png
-│   ├── attention_map_example.png
-│   ├── reference.png
-│   ├── target.png
-│   └── result.png
-├── notes/
-│   └── paper_summary.md
-└── experiments/
-    └── kv_feature_injection/
