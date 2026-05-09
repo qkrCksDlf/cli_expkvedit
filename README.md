@@ -80,16 +80,16 @@ This approach was inspired by the Stable Flow paper.
 Vital Layers = [0,1,2,17,18,25,28,53,54,56]
 
 
-![KV-Edit Result](./assets/no2_exp_image1.jpg)
+![KV-Edit Result2](./assets/no2_exp_image1.jpg)
 
 ---
 
-### 3. Removing RoPE (Rotational Position Embedding) in FLUX
+### 3. Removing RoPE (Rotational Position Embedding) in Vital Layers
 I experimented with removing the RoPE (Rotational Position Embedding) from the FLUX model, an approach inspired by the CharaConsist paper.
 
 In the standard FLUX architecture, the positional embeddings tend to bias the attention mechanism toward spatial correspondence rather than semantic relevance. By removing RoPE, I aimed to break this rigid spatial dependency, allowing the model to perform more flexible, content-aware attention for better subject integration.
 
-
+![KV-Edit Result3](./assets/no2_exp_image2.jpg)
 
 
 ---
