@@ -54,7 +54,10 @@ To address this limitation, I conducted research on extending the KV-Edit framew
 The main goal of this research was to explore how a generative editing model can incorporate reference-image information while maintaining both identity preservation and background consistency.
 
 
+---
 
+### 0
+The official KV-Edit GitHub repository uses Gradio, but we converted it into a CLI-based implementation.
 
 ---
 
