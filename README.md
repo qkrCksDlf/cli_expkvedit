@@ -45,7 +45,7 @@ The main goal of this research was to explore how a generative editing model can
 
 ---
 
-### 0
+### 0. Gradio-to-CLI Refactoring
 The official KV-Edit GitHub repository uses Gradio, but we converted it into a CLI-based implementation.
 
 ---
