@@ -1,14 +1,3 @@
-```
-python cli_kv_edit.py \
-    --input_image "003.jpg" \
-    --mask_image "ref_mask3.jpg" \
-    --ref_image "011.png" \
-    --ref_mask_image "ref_mask3.jpg" \
-    --source_prompt "a bag is on the floor" \
-    --target_prompt "a dog is sitting on the floor" \
-    --re_init
-```
-
 # Subject-driven Image Editing Research
 
 This repository summarizes my undergraduate research experience on **subject-driven image editing** using diffusion-based generative models.
@@ -108,5 +97,16 @@ In future work, using an inpainting-oriented model such as FLUX Fill could be a 
 ### Reflection
 이 프로젝트를 통해 단순히 pre-trained 모델을 사용하는 것을 넘어, 모델 내부 구조를 코드 레벨에서 분석하고 가설을 세워 검증하는 연구 사이클을 직접 경험했다. KV-Edit의 코드를 분해하고, 어텐션 맵으로 원인을 추적하고, 관련 논문을 탐색해 구조 수정으로 이어지는 사이클은, 향후 어떤 AI 모델을 만나도 빠르게 구조를 파악하고 개선점을 찾아낼 수 있는 자산이 되었다.
 
+### Usage
+```
+python cli_kv_edit.py \
+    --input_image "003.jpg" \
+    --mask_image "ref_mask3.jpg" \
+    --ref_image "011.png" \
+    --ref_mask_image "ref_mask3.jpg" \
+    --source_prompt "a bag is on the floor" \
+    --target_prompt "a dog is sitting on the floor" \
+    --re_init
+```
 ---
 This experiment was conducted using a single A40 GPU.
